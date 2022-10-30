@@ -22,6 +22,9 @@ To reload the app and see your changes reflected, you can:
 
 ### CIDER
 
+> TL;DR: Customize the jack in command, delete the `:cider/nrepl` alias at the
+> end of the command and replace it with `:dev:cider`
+
 If you use an editor like Emacs or Calva which integrates using CIDER, you can
 customize the jack-in command to work with your HumbleUI app.
 
@@ -39,15 +42,15 @@ by running the jack-in command but customizing it. In Emacs, this is
 ```
 
 For our purposes, the `user` ns has a `-main` function which handles all of the
-app and nREPL server initialization. The only thing we need to do is pass in the
-middlewares to it.
+app and nREPL server initialization. The only thing we need to replace the call to
+CIDER's main wiht our own and pass in the middlewares to it.
 
-Below, we show the command after we delete the use of the `cider/nrepl` alias
-and replace it with the `:dev` alias and then run the main function in the
-`user` namespace, passing in the nREPL options for CIDER's middleware.
+Below, we show the command after we delete the use of the `:cider/nrepl` alias
+and replace it with the `:dev:cider` alias configured in our deps.edn, which
+calls our custom `-main` function wiht the CIDER middlewares
 
 ```
-/opt/homebrew/bin/clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version "1.0.0"} cider/cider-nrepl {:mvn/version "0.28.6"}} :aliases {:cider/nrepl {:main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}}}' -M:dev -m user --middleware '[cider.nrepl/cider-middleware]'
+/opt/homebrew/bin/clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version "1.0.0"} cider/cider-nrepl {:mvn/version "0.28.6"}} :aliases {:cider/nrepl {:main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}}}' -M:dev:cider
 ```
 
 ![Emacs with CIDER connected and using reload](./cider-reload.png)
