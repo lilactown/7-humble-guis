@@ -1,4 +1,4 @@
-# humblu-starter
+# humble-starter
 
 A commented, minimal example project to get you started with developing desktop
 apps using [HumbleUI](https://github.com/HumbleUI/HumbleUI) and Clojure.
