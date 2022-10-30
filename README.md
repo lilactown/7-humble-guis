@@ -50,6 +50,8 @@ and replace it with the `:dev` alias and then run the main function in the
 /opt/homebrew/bin/clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version "1.0.0"} cider/cider-nrepl {:mvn/version "0.28.6"}} :aliases {:cider/nrepl {:main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}}}' -M:dev -m user --middleware '[cider.nrepl/cider-middleware]'
 ```
 
+![Emacs with CIDER connected and using reload](./cider-reload.png)
+
 ## Credit
 
 A lot of this code was copied and then modified from the HumbleUI codebase
