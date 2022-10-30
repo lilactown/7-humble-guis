@@ -1,0 +1,7 @@
+{:paths ["src"]
+ :deps {io.github.humbleui/humbleui {:git/sha "c3eb2ec04fcccb40cc4a3da44ccda0ef3ccacc01"}}
+ :aliases
+ {:dev {:extra-paths ["dev"]
+        :extra-deps {nrepl/nrepl {:mvn/version "1.0.0"}
+                     org.clojure/tools.namespace {:mvn/version "1.3.0"}}
+        :jvm-opts ["-ea"]}}}
