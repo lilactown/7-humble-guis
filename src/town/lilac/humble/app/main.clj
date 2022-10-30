@@ -16,7 +16,7 @@
    {}
    ;; just some random stuff
    (ui/center
-    (ui/label "1 2 3"))))
+    (ui/label "hi"))))
 
 ;; reset current app state on eval of this ns
 (reset! state/*app app)
