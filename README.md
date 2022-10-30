@@ -7,7 +7,7 @@ apps using [HumbleUI](https://github.com/HumbleUI/HumbleUI) and Clojure.
 
 To simply run the app, execute `./scripts/run.sh`.
 
-To start a REPL (including an nREPL server), you can run `./scripts/nrepl.sh`
+To start a REPL (including a minimal nREPL server), you can run `./scripts/nrepl.sh`
 
 ### Reloading
 
