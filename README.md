@@ -49,3 +49,15 @@ and replace it with the `:dev` alias and then run the main function in the
 ```
 /opt/homebrew/bin/clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version "1.0.0"} cider/cider-nrepl {:mvn/version "0.28.6"}} :aliases {:cider/nrepl {:main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}}}' -M:dev -m user --middleware '[cider.nrepl/cider-middleware]'
 ```
+
+## Credit
+
+A lot of this code was copied and then modified from the HumbleUI codebase
+itself, as well as [humble-dec](https://github.com/tonsky/humble-deck/) and
+[humble-animations](https://github.com/oakmac/humble-animations). Thanks to
+@tonsky for developing HumbleUI and releasing so many cool examples, and @oakmac
+for showing me some cool stuff too!
+
+## License & Copyright
+
+Licensed under MIT. Copyright Will Acton 2022.
