@@ -21,9 +21,6 @@
 ;; reset current app state on eval of this ns
 (reset! state/*app app)
 
-;; if you use clojure.tools.namespace, you can comment this out.
-;;(state/redraw!)
-
 (defn -main
   "Run once on app start, starting the humble app."
   [& args]
