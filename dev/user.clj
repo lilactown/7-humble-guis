@@ -33,7 +33,7 @@
   ;; (reset! debug/*enabled? true)
 
   ;; start nREPL server (on another thread)
-  (nrepl/-main "--interactive"))
+  (apply nrepl/-main args))
 
 (comment
   ;; Anything we do to the app UI, we need to eval it wrapped in `doui` so that
