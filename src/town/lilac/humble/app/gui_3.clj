@@ -59,53 +59,53 @@
   (ui/default-theme
    {:hui.button/bg-inactive (paint/fill 0xFFBBBBBB)
     :hui.text-field/fill-bg-disabled (paint/fill 0xFFE0E0E0)}
-   (ui/dynamic
-    ctx
-    [{:keys [scale]} ctx
-     start-disabled? (:disabled? @*start-input)
-     start-error? (:error? @*start-input)
-     return-disabled? (:disabled? @*return-input)
-     return-error? (:error? @*return-input)
-     invalid? (or (:error? @*start-input)
-                  (string/blank? (:text @*start-input))
-                  (and @*round-trip?
-                       (:error? @*return-input))
-                  (and @*round-trip?
-                       (string/blank? (:text @*return-input))))]
-    (ui/with-context
-      {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))}
-      (ui/focus-controller
-       (ui/center
-        (ui/column
-         (ui/row
-          (ui/toggle *round-trip?)
-          (ui/gap 20 0)
-          (ui/center
-           (ui/label "Round trip?")))
-         (ui/gap 20 20)
-         (disabled
-          start-disabled?
-          (invalid
-           start-error?
-           (ui/column
-            (ui/label "Start")
-            (ui/gap 5 5)
-            (ui/width
-             200
-             (tf/text-field {:on-change on-start} *start-input)))))
-         (ui/gap 20 20)
-         (disabled
-          return-disabled?
+   (let [start (ui/column
+                (ui/label "Start")
+                (ui/gap 5 5)
+                (ui/width
+                 200
+                 (tf/text-field {:on-change on-start} *start-input)))
+         return (ui/column
+                 (ui/label "Return")
+                 (ui/gap 5 5)
+                 (ui/width
+                  200
+                  (tf/text-field {:on-change on-return} *return-input))) ]
+     (ui/dynamic
+      ctx
+      [{:keys [scale]} ctx
+       start-disabled? (:disabled? @*start-input)
+       start-error? (:error? @*start-input)
+       return-disabled? (:disabled? @*return-input)
+       return-error? (:error? @*return-input)
+       invalid? (or (:error? @*start-input)
+                    (string/blank? (:text @*start-input))
+                    (and @*round-trip?
+                         (:error? @*return-input))
+                    (and @*round-trip?
+                         (string/blank? (:text @*return-input))))]
+      (ui/with-context
+        {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))}
+        (ui/focus-controller
+         (ui/center
           (ui/column
-           (ui/label "Return")
-           (ui/gap 5 5)
-           (ui/width
-            200
-            (tf/text-field {:on-change on-return} *return-input))))
-         (ui/gap 20 20)
-         (disabled
-          invalid?
-          (button on-book (ui/label "Book"))))))))))
+           (ui/row
+            (ui/toggle *round-trip?)
+            (ui/gap 20 0)
+            (ui/center
+             (ui/label "Round trip?")))
+           (ui/gap 20 20)
+           (disabled
+            start-disabled?
+            (invalid start-error? start))
+           (ui/gap 20 20)
+           (disabled
+            return-disabled?
+            (invalid return-error? return))
+           (ui/gap 20 20)
+           (disabled
+            invalid?
+            (button on-book (ui/label "Book")))))))))))
 
 
 (defn parse-date
