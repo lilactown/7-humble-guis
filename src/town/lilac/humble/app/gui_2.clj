@@ -45,23 +45,25 @@
 
 (defn start!
   []
-  (let [init 5
+  (let [init 5.0
         *c-input (atom {:text (str init)})
-        *f-input (atom {:text (str (c->f init))})]
+        *f-input (atom {:text (str (c->f init))})
+        on-celsius (fn on-celsius-change
+                     [{:keys [text]}]
+                     (swap!
+                      *f-input
+                      assoc :text
+                      (str (c->f (Float/parseFloat text)))))
+        on-fahrenheit (fn on-fahrenheit-change
+                        [{:keys [text]}]
+                        (swap!
+                         *c-input
+                         assoc :text
+                         (str (f->c (Float/parseFloat text)))))]
     (reset! state/*app (temp-converter
                         *c-input *f-input
-                        (fn on-celsius-change
-                          [{:keys [text]}]
-                          (swap!
-                           *f-input
-                           assoc :text
-                           (str (c->f (Float/parseFloat text)))))
-                        (fn on-fahrenheit-change
-                          [{:keys [text]}]
-                          (swap!
-                           *c-input
-                           assoc :text
-                           (str (f->c (Float/parseFloat text))))))))
+                        on-celsius
+                        on-fahrenheit)))
   (state/redraw!)
   (app/doui
    (window/set-content-size @state/*window 600 200)))
