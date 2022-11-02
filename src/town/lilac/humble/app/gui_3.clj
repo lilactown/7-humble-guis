@@ -14,6 +14,11 @@
   (ui/with-context {:hui/disabled? disabled?} child))
 
 
+(defn invalid
+  [error? child]
+  (ui/with-context {:hui/error? error?} child))
+
+
 (defn button
   ([on-click child]
    (button on-click nil child))
@@ -45,14 +50,21 @@
 
 
 (defn flight-booker
-  [{:keys [*round-trip? *start-disabled? *start-input *return-disabled? *return-input on-start on-return on-book]}]
+  [{:keys [*round-trip?
+           *start-input
+           *return-input
+           on-start
+           on-return
+           on-book]}]
   (ui/default-theme
    {}
    (ui/dynamic
     ctx
     [{:keys [scale]} ctx
-     start-disabled? @*start-disabled?
-     return-disabled? @*return-disabled?
+     start-disabled? (:disabled? @*start-input)
+     start-error? (:error? @*start-input)
+     return-disabled? (:disabled? @*return-input)
+     return-error? (:error? @*return-input)
      invalid? (or (:error? @*start-input)
                   (string/blank? (:text @*start-input))
                   (and @*round-trip?
@@ -63,35 +75,37 @@
       {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))
        :hui.button/bg-inactive (paint/fill 0xFFBBBBBB)}
       (ui/focus-controller
-      (ui/center
-       (ui/column
-        (ui/row
-         (ui/toggle *round-trip?)
-         (ui/gap 20 0)
-         (ui/center
-          (ui/label "Round trip?")))
-        (ui/gap 20 20)
-        (disabled
-         start-disabled?
-         (ui/column
-          (ui/label "Start")
-          (ui/gap 5 5)
-          (ui/width
-           200
-           (tf/text-field {:on-change on-start} *start-input))))
-        (ui/gap 20 20)
-        (disabled
-         return-disabled?
-         (ui/column
-          (ui/label "Return")
-          (ui/gap 5 5)
-          (ui/width
-           200
-           (tf/text-field {:on-change on-return} *return-input))))
-        (ui/gap 20 20)
-        (disabled
-         invalid?
-         (button on-book (ui/label "Book"))))))))))
+       (ui/center
+        (ui/column
+         (ui/row
+          (ui/toggle *round-trip?)
+          (ui/gap 20 0)
+          (ui/center
+           (ui/label "Round trip?")))
+         (ui/gap 20 20)
+         (disabled
+          start-disabled?
+          (invalid
+           start-error?
+           (ui/column
+            (ui/label "Start")
+            (ui/gap 5 5)
+            (ui/width
+             200
+             (tf/text-field {:on-change on-start} *start-input)))))
+         (ui/gap 20 20)
+         (disabled
+          return-disabled?
+          (ui/column
+           (ui/label "Return")
+           (ui/gap 5 5)
+           (ui/width
+            200
+            (tf/text-field {:on-change on-return} *return-input))))
+         (ui/gap 20 20)
+         (disabled
+          invalid?
+          (button on-book (ui/label "Book"))))))))))
 
 
 (defn parse-date
@@ -105,13 +119,13 @@
 (defn start!
   []
   (let [*round-trip? (atom false)
-        *start-disabled? (atom false)
-        *start-input (atom {:text ""})
-        *return-disabled? (atom true)
-        *return-input (atom {:text ""})
+        *start-input (atom {:text ""
+                            :disabled? false})
+        *return-input (atom {:text ""
+                             :disabled? true})
         on-toggle (fn on-return-toggle
                     [return?]
-                    (reset! *return-disabled? (not return?)))
+                    (swap! *return-input assoc :disabled? (not return?)))
         on-start (fn on-start-change
                    [{:keys [text]}]
                    (if (parse-date text)
@@ -127,9 +141,7 @@
     (add-watch *round-trip? :toggle (fn [_ _ _ round-trip?] (on-toggle round-trip?)))
     (reset! state/*app (flight-booker
                         {:*round-trip? *round-trip?
-                         :*start-disabled? *start-disabled?
                          :*start-input *start-input
-                         :*return-disabled? *return-disabled?
                          :*return-input *return-input
                          :on-start on-start
                          :on-return on-return
