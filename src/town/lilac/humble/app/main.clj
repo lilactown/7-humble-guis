@@ -3,12 +3,7 @@
   Responsible for initializing the window and app state when the app starts."
   (:require
    [io.github.humbleui.ui :as ui]
-   ;; [io.github.humbleui.window :as window]
-   [town.lilac.humble.app.state :as state])
-  (:import
-   [io.github.humbleui.skija Color ColorSpace]
-   [io.github.humbleui.jwm Window]
-   [io.github.humbleui.jwm.skija LayerMetalSkija]))
+   [town.lilac.humble.app.state :as state]))
 
 (def app
   "Main app definition."
