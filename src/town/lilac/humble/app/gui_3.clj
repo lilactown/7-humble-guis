@@ -7,41 +7,44 @@
    [town.lilac.humble.text-field :as tf]))
 
 (defn flight-booker
-  [*one-way *start *return on-start on-return on-book]
+  [*return *start-input *return-input on-start on-return on-book]
   (ui/default-theme
    {}
    (ui/focus-controller
     (ui/center
      (ui/column
       (ui/row
-       (ui/toggle *one-way)
+       (ui/toggle *return)
        (ui/gap 20 0)
        (ui/center
-        (ui/label "One-way?")))
+        (ui/label "Return?")))
       (ui/gap 20 20)
       (ui/column
        (ui/label "Start")
        (ui/gap 5 5)
        (ui/width
         200
-        (tf/text-field {:on-change on-start} *start)))
+        (tf/text-field {:on-change on-start} *start-input)))
       (ui/gap 20 20)
       (ui/column
        (ui/label "Return")
        (ui/gap 5 5)
        (ui/width
         200
-        (tf/text-field {:on-change on-return} *return)))
+        (tf/text-field {:on-change on-return} *return-input)))
       (ui/gap 20 20)
       (ui/button on-book (ui/label "Book")))))))
 
 
 (defn start!
   []
-  (let [*one-way (atom true)
+  (let [*return (atom false)
         *start-input (atom {:text ""})
         *return-input (atom {:text ""
                              :disabled? true})
+        on-toggle (fn on-return-toggle
+                    [return?]
+                    (swap! *return-input assoc :disabled? (not return?)))
         on-start (fn on-start-change
                      [{:keys [text]}]
                      )
@@ -50,8 +53,9 @@
                     )
         on-book (fn on-book
                   [])]
+    (add-watch *return :toggle (fn [_ _ _ return?] (on-toggle return?)))
     (reset! state/*app (flight-booker
-                        *one-way *start-input *return-input
+                        *return *start-input *return-input
                         on-start
                         on-return
                         on-book)))
