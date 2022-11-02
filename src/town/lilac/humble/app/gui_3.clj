@@ -7,6 +7,42 @@
    [town.lilac.humble.app.state :as state]
    [town.lilac.humble.text-field :as tf]))
 
+
+(defn disabled
+  [disabled? child]
+  (ui/with-context {:hui/disabled? disabled?} child))
+
+
+(defn button
+  ([on-click child]
+   (button on-click nil child))
+  ([on-click opts child]
+   (ui/dynamic
+    ctx
+    [{:hui.button/keys [bg bg-active bg-inactive bg-hovered border-radius padding-left padding-top padding-right padding-bottom]} ctx]
+    (ui/clickable
+     {:on-click (when on-click
+                  (fn [_] (on-click)))}
+     (ui/clip-rrect
+      border-radius
+      (ui/dynamic
+       ctx
+       [{:hui/keys [hovered? active? disabled?]} ctx]
+       (ui/rect
+        (cond
+          disabled? bg-inactive
+          active?  bg-active
+          hovered? bg-hovered
+          :else    bg)
+        (ui/padding
+         padding-left padding-top padding-right padding-bottom
+         (ui/center
+          (ui/with-context
+            {:hui/active? false
+             :hui/hovered? false}
+            child))))))))))
+
+
 (defn flight-booker
   [*return *start-input *return-input on-start on-return on-book]
   (ui/default-theme
