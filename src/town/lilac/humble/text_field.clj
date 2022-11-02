@@ -928,32 +928,36 @@
     ctx
     [disabled? (:hui/disabled? ctx)]
     (let [child (with-cursor/with-cursor :ibeam
-                  (dynamic/dynamic ctx [disabled? (:hui/disabled? ctx)
-                                        error? (:hui/error? ctx)
-                                        active? (and (:hui/focused? ctx)
-                                                     (not disabled?))
-                                        stroke  (cond
-                                                  (and error? (not disabled?))
-                                                  (:hui.text-field/border-error ctx)
+                  (dynamic/dynamic
+                   ctx
+                   [disabled? (:hui/disabled? ctx)
+                    error? (:hui/error? ctx)
+                    active? (and (:hui/focused? ctx)
+                                 (not disabled?))
+                    stroke (cond
+                             (and error? (not disabled?))
+                             (:hui.text-field/border-error ctx)
 
-                                                  active?
-                                                  (:hui.text-field/border-active ctx)
+                             active?
+                             (:hui.text-field/border-active ctx)
 
-                                                  :else
-                                                  (:hui.text-field/border-inactive ctx))
-                                        bg      (cond
-                                                  disabled?
-                                                  (:hui.text-field/fill-bg-disabled ctx)
+                             :else
+                             (:hui.text-field/border-inactive ctx))
+                    bg      (cond
+                              disabled?
+                              (:hui.text-field/fill-bg-disabled ctx)
 
-                                                  active?
-                                                  (:hui.text-field/fill-bg-active ctx)
+                              active?
+                              (:hui.text-field/fill-bg-active ctx)
 
-                                                  :else
-                                                  (:hui.text-field/fill-bg-inactive ctx))
-                                        radius  (:hui.text-field/border-radius ctx)]
-                                   (rect/rounded-rect {:radius radius} bg
-                                                      (rect/rounded-rect {:radius radius} stroke
-                                                                         (text-input opts *state)))))]
+                              :else
+                              (:hui.text-field/fill-bg-inactive ctx))
+                    radius (:hui.text-field/border-radius ctx)]
+                   (rect/rounded-rect
+                    {:radius radius} bg
+                    (rect/rounded-rect
+                     {:radius radius} stroke
+                     (text-input opts *state)))))]
       (if disabled?
        child
        (focusable/focusable opts child))))))
