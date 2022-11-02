@@ -941,8 +941,14 @@
 
                                                   :else
                                                   (:hui.text-field/border-inactive ctx))
-                                        bg      (if active?
+                                        bg      (cond
+                                                  disabled?
+                                                  (:hui.text-field/fill-bg-disabled ctx)
+
+                                                  active?
                                                   (:hui.text-field/fill-bg-active ctx)
+
+                                                  :else
                                                   (:hui.text-field/fill-bg-inactive ctx))
                                         radius  (:hui.text-field/border-radius ctx)]
                                    (rect/rounded-rect {:radius radius} bg
