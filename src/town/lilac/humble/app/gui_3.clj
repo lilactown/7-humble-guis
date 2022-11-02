@@ -57,7 +57,8 @@
            on-return
            on-book]}]
   (ui/default-theme
-   {}
+   {:hui.button/bg-inactive (paint/fill 0xFFBBBBBB)
+    :hui.text-field/fill-bg-disabled (paint/fill 0xFFE0E0E0)}
    (ui/dynamic
     ctx
     [{:keys [scale]} ctx
@@ -72,8 +73,7 @@
                   (and @*round-trip?
                        (string/blank? (:text @*return-input))))]
     (ui/with-context
-      {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))
-       :hui.button/bg-inactive (paint/fill 0xFFBBBBBB)}
+      {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))}
       (ui/focus-controller
        (ui/center
         (ui/column
