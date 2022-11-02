@@ -1,6 +1,7 @@
 (ns town.lilac.humble.app.gui-3
   (:require
    [io.github.humbleui.app :as app]
+   [io.github.humbleui.paint :as paint]
    [io.github.humbleui.ui :as ui]
    [io.github.humbleui.window :as window]
    [town.lilac.humble.app.state :as state]
@@ -10,44 +11,50 @@
   [*return *start-input *return-input on-start on-return on-book]
   (ui/default-theme
    {}
-   (ui/focus-controller
-    (ui/center
-     (ui/column
-      (ui/row
-       (ui/toggle *return)
-       (ui/gap 20 0)
-       (ui/center
-        (ui/label "Return?")))
-      (ui/gap 20 20)
-      (ui/column
-       (ui/label "Start")
-       (ui/gap 5 5)
-       (ui/width
-        200
-        (tf/text-field {:on-change on-start} *start-input)))
-      (ui/gap 20 20)
-      (ui/column
-       (ui/label "Return")
-       (ui/gap 5 5)
-       (ui/width
-        200
-        (tf/text-field {:on-change on-return} *return-input)))
-      (ui/gap 20 20)
-      (ui/button on-book (ui/label "Book")))))))
+   (ui/dynamic
+    ctx
+    [{:keys [scale]} ctx]
+    (ui/with-context
+      {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))}
+      (ui/focus-controller
+      (ui/center
+       (ui/column
+        (ui/row
+         (ui/toggle *return)
+         (ui/gap 20 0)
+         (ui/center
+          (ui/label "Return?")))
+        (ui/gap 20 20)
+        (ui/column
+         (ui/label "Start")
+         (ui/gap 5 5)
+         (ui/width
+          200
+          (tf/text-field {:on-change on-start} *start-input)))
+        (ui/gap 20 20)
+        (ui/column
+         (ui/label "Return")
+         (ui/gap 5 5)
+         (ui/width
+          200
+          (tf/text-field {:on-change on-return} *return-input)))
+        (ui/gap 20 20)
+        (ui/button on-book (ui/label "Book")))))))))
 
 
 (defn start!
   []
   (let [*return (atom false)
-        *start-input (atom {:text ""})
+        *start-input (atom {:text ""
+                            :error? true})
         *return-input (atom {:text ""
                              :disabled? true})
         on-toggle (fn on-return-toggle
                     [return?]
                     (swap! *return-input assoc :disabled? (not return?)))
         on-start (fn on-start-change
-                     [{:keys [text]}]
-                     )
+                   [{:keys [text]}]
+                   )
         on-return (fn on-return-change
                     [{:keys [text]}]
                     )
