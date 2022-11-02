@@ -629,251 +629,252 @@
                 (- cursor-blink-interval
                   (mod (- now cursor-blink-pivot) cursor-blink-interval)))))))))
 
-  (-event [this ctx event]
-    ; (when-not (#{:frame :frame-skija :window-focus-in :window-focus-out :mouse-move} (:event event))
-    ;   (println (:hui/focused? ctx) event))
-    (when (:hui/focused? ctx)
-      (let [state @*state
-            {:keys [text from to marked-from marked-to offset ^TextLine line mouse-clicks last-mouse-click]} state]
-        (when (= :mouse-move (:event event))
-          (swap! *state assoc
-            :mouse-clicks 0))
+  (-event
+   [this ctx event]
+                                        ; (when-not (#{:frame :frame-skija :window-focus-in :window-focus-out :mouse-move} (:event event))
+                                        ;   (println (:hui/focused? ctx) event))
+   (when (and (:hui/focused? ctx) (not (:disabled? @*state)))
+     (let [state @*state
+           {:keys [text from to marked-from marked-to offset ^TextLine line mouse-clicks last-mouse-click]} state]
+       (when (= :mouse-move (:event event))
+         (swap! *state assoc
+                :mouse-clicks 0))
 
-        (core/cond+
-          ;; mouse down
-          (and
-            (= :mouse-button (:event event))
-            (= :primary (:button event))
-            (:pressed? event)
-            my-rect
-            (.contains my-rect (IPoint. (:x event) (:y event))))
-          (let [x             (-> (:x event)
+       (core/cond+
+        ;; mouse down
+        (and
+         (= :mouse-button (:event event))
+         (= :primary (:button event))
+         (:pressed? event)
+         my-rect
+         (.contains my-rect (IPoint. (:x event) (:y event))))
+        (let [x             (-> (:x event)
                                 (- (:x my-rect))
                                 (+ offset))
-                offset'       (.getOffsetAtCoord line x)
-                now           (core/now)
-                mouse-clicks' (if (<= (- now last-mouse-click) core/double-click-threshold-ms)
-                                (inc mouse-clicks)
-                                1)]
-            (swap! *state #(cond-> %
-                             true
-                             (assoc
-                               :selecting?       true
-                               :last-mouse-click now
-                               :mouse-clicks     mouse-clicks')
+              offset'       (.getOffsetAtCoord line x)
+              now           (core/now)
+              mouse-clicks' (if (<= (- now last-mouse-click) core/double-click-threshold-ms)
+                              (inc mouse-clicks)
+                              1)]
+          (swap! *state #(cond-> %
+                           true
+                           (assoc
+                            :selecting?       true
+                            :last-mouse-click now
+                            :mouse-clicks     mouse-clicks')
 
-                             (= 1 mouse-clicks')
-                             (edit :move-to-position offset')
+                           (= 1 mouse-clicks')
+                           (edit :move-to-position offset')
 
-                             (= 2 mouse-clicks')
-                             (edit :select-word offset')
+                           (= 2 mouse-clicks')
+                           (edit :select-word offset')
 
-                             (< 2 mouse-clicks')
-                             (edit :select-all nil)))
-            true)
+                           (< 2 mouse-clicks')
+                           (edit :select-all nil)))
+          true)
 
-          ; mouse up
-          (and
-            (= :mouse-button (:event event))
-            (= :primary (:button event))
-            (not (:pressed? event)))
-          (do
-            (swap! *state assoc :selecting? false)
-            false)
+                                        ; mouse up
+        (and
+         (= :mouse-button (:event event))
+         (= :primary (:button event))
+         (not (:pressed? event)))
+        (do
+          (swap! *state assoc :selecting? false)
+          false)
 
-          ;; mouse move
-          (and
-            (= :mouse-move (:event event))
-            (:selecting? state))
-          (let [x (-> (:x event)
+        ;; mouse move
+        (and
+         (= :mouse-move (:event event))
+         (:selecting? state))
+        (let [x (-> (:x event)
                     (- (:x my-rect))
                     (+ offset))]
-            (cond
-              (.contains my-rect (IPoint. (:x event) (:y event)))
-              (swap! *state edit :expand-to-position (.getOffsetAtCoord line x))
+          (cond
+            (.contains my-rect (IPoint. (:x event) (:y event)))
+            (swap! *state edit :expand-to-position (.getOffsetAtCoord line x))
 
-              (< (:y event) (:y my-rect))
-              (swap! *state edit :expand-to-position 0)
+            (< (:y event) (:y my-rect))
+            (swap! *state edit :expand-to-position 0)
 
-              (>= (:y event) (:bottom my-rect))
-              (swap! *state edit :expand-to-position (count (:text state))))
-            true)
+            (>= (:y event) (:bottom my-rect))
+            (swap! *state edit :expand-to-position (count (:text state))))
+          true)
 
-          ;; typing
-          (= :text-input (:event event))
-          (do
-            (swap! *state #(cond-> %
-                             true             (dissoc :postponed)
-                             (:marked-from %) (edit :kill-marked nil)
-                             (not= from to)   (edit :kill nil)
-                             true             (edit :insert (:text event))))
-            (when-some [postponed (:postponed state)]
-              (protocols/-event this ctx postponed))
-            (and on-change
-                 (try (on-change @*state)
-                      (catch Throwable e
-                        (core/log-error e))))
-            true)
+        ;; typing
+        (= :text-input (:event event))
+        (do
+          (swap! *state #(cond-> %
+                           true             (dissoc :postponed)
+                           (:marked-from %) (edit :kill-marked nil)
+                           (not= from to)   (edit :kill nil)
+                           true             (edit :insert (:text event))))
+          (when-some [postponed (:postponed state)]
+            (protocols/-event this ctx postponed))
+          (and on-change
+               (try (on-change @*state)
+                    (catch Throwable e
+                      (core/log-error e))))
+          true)
 
-          ;; composing region
-          (= :text-input-marked (:event event))
-          (do
-            (swap! *state
-              #(cond-> %
-                 (:marked-from %) (edit :kill-marked nil)
-                 (not= from to)   (edit :kill nil)
-                 true             (edit :insert-marked event)))
-            true)
+        ;; composing region
+        (= :text-input-marked (:event event))
+        (do
+          (swap! *state
+                 #(cond-> %
+                    (:marked-from %) (edit :kill-marked nil)
+                    (not= from to)   (edit :kill nil)
+                    true             (edit :insert-marked event)))
+          true)
 
-          ;; rect for composing region
-          (= :get-rect-for-marked-range (:event event))
-          (let [{:hui.text-field/keys [^Font font
-                                       padding-top]} ctx
-                metrics    ^FontMetrics (.getMetrics font)
-                cap-height (Math/ceil (.getCapHeight metrics))
-                ascent     (Math/ceil (- (- (.getAscent metrics)) cap-height))
-                descent    (Math/ceil (.getDescent metrics))
-                baseline   (+ padding-top cap-height)
-                left       (.getCoordAtOffset line (or marked-from from))
-                right      (if (= (or marked-to to) (or marked-from from))
-                             left
-                             (.getCoordAtOffset line (or marked-to to)))]
-            (IRect/makeLTRB
-              (+ (:x my-rect) (- offset) left)
-              (+ (:y my-rect) padding-top (- ascent))
-              (+ (:x my-rect) (- offset) right)
-              (+ (:y my-rect) baseline descent)))
+        ;; rect for composing region
+        (= :get-rect-for-marked-range (:event event))
+        (let [{:hui.text-field/keys [^Font font
+                                     padding-top]} ctx
+              metrics    ^FontMetrics (.getMetrics font)
+              cap-height (Math/ceil (.getCapHeight metrics))
+              ascent     (Math/ceil (- (- (.getAscent metrics)) cap-height))
+              descent    (Math/ceil (.getDescent metrics))
+              baseline   (+ padding-top cap-height)
+              left       (.getCoordAtOffset line (or marked-from from))
+              right      (if (= (or marked-to to) (or marked-from from))
+                           left
+                           (.getCoordAtOffset line (or marked-to to)))]
+          (IRect/makeLTRB
+           (+ (:x my-rect) (- offset) left)
+           (+ (:y my-rect) padding-top (- ascent))
+           (+ (:x my-rect) (- offset) right)
+           (+ (:y my-rect) baseline descent)))
 
-          ;; emoji popup macOS
-          (and
-            (= :macos app/platform)
-            (= :key (:event event))
-            (:pressed? event)
-            (= :space (:key event))
-            ((:modifiers event) :mac-command)
-            ((:modifiers event) :control))
-          (do
-            (app/open-symbols-palette)
-            false)
+        ;; emoji popup macOS
+        (and
+         (= :macos app/platform)
+         (= :key (:event event))
+         (:pressed? event)
+         (= :space (:key event))
+         ((:modifiers event) :mac-command)
+         ((:modifiers event) :control))
+        (do
+          (app/open-symbols-palette)
+          false)
 
-          ;; when exiting composing region with left/right/backspace/delete,
-          ;; key down comes before text input, and we need it after
-          (and (= :key (:event event)) (:pressed? event) (:marked-from state))
-          (do
-            (swap! *state assoc :postponed event)
-            false)
+        ;; when exiting composing region with left/right/backspace/delete,
+        ;; key down comes before text input, and we need it after
+        (and (= :key (:event event)) (:pressed? event) (:marked-from state))
+        (do
+          (swap! *state assoc :postponed event)
+          false)
 
-          ;; command
-          (and (= :key (:event event)) (:pressed? event))
-          (let [key        (:key event)
-                shift?     ((:modifiers event) :shift)
-                macos?     (= :macos app/platform)
-                cmd?       ((:modifiers event) :mac-command)
-                option?    ((:modifiers event) :mac-option)
-                ctrl?      ((:modifiers event) :control)
-                selection? (not= from to)
-                ops        (or
-                             (core/when-case (and macos? cmd? shift?) key
-                               :left  [:expand-doc-start]
-                               :right [:expand-doc-end]
-                               :z     [:redo])
+        ;; command
+        (and (= :key (:event event)) (:pressed? event))
+        (let [key        (:key event)
+              shift?     ((:modifiers event) :shift)
+              macos?     (= :macos app/platform)
+              cmd?       ((:modifiers event) :mac-command)
+              option?    ((:modifiers event) :mac-option)
+              ctrl?      ((:modifiers event) :control)
+              selection? (not= from to)
+              ops        (or
+                          (core/when-case (and macos? cmd? shift?) key
+                                          :left  [:expand-doc-start]
+                                          :right [:expand-doc-end]
+                                          :z     [:redo])
 
-                             (core/when-case (and macos? option? shift?) key
-                               :left  [:expand-word-left]
-                               :right [:expand-word-right])
+                          (core/when-case (and macos? option? shift?) key
+                                          :left  [:expand-word-left]
+                                          :right [:expand-word-right])
 
-                             (core/when-case shift? key
-                               :left  [:expand-char-left]
-                               :right [:expand-char-right]
-                               :up    [:expand-doc-start]
-                               :down  [:expand-doc-end]
-                               :home  [:expand-doc-start]
-                               :end   [:expand-doc-end])
+                          (core/when-case shift? key
+                                          :left  [:expand-char-left]
+                                          :right [:expand-char-right]
+                                          :up    [:expand-doc-start]
+                                          :down  [:expand-doc-end]
+                                          :home  [:expand-doc-start]
+                                          :end   [:expand-doc-end])
 
-                             (core/when-case selection? key
-                               :backspace [:kill]
-                               :delete    [:kill])
+                          (core/when-case selection? key
+                                          :backspace [:kill]
+                                          :delete    [:kill])
 
-                             (core/when-case (and macos? cmd? selection?) key
-                               :x         [:copy :kill]
-                               :c         [:copy]
-                               :v         [:kill :paste])
+                          (core/when-case (and macos? cmd? selection?) key
+                                          :x         [:copy :kill]
+                                          :c         [:copy]
+                                          :v         [:kill :paste])
 
-                             (core/when-case (and macos? cmd?) key
-                               :left      [:move-doc-start]
-                               :right     [:move-doc-end]
-                               :a         [:select-all]
-                               :backspace [:delete-doc-start]
-                               :delete    [:delete-doc-end]
-                               :v         [:paste]
-                               :z         [:undo])
+                          (core/when-case (and macos? cmd?) key
+                                          :left      [:move-doc-start]
+                                          :right     [:move-doc-end]
+                                          :a         [:select-all]
+                                          :backspace [:delete-doc-start]
+                                          :delete    [:delete-doc-end]
+                                          :v         [:paste]
+                                          :z         [:undo])
 
-                             (core/when-case (and macos? option?) key
-                               :left      [:move-word-left]
-                               :right     [:move-word-right]
-                               :backspace [:delete-word-left]
-                               :delete    [:delete-word-right])
+                          (core/when-case (and macos? option?) key
+                                          :left      [:move-word-left]
+                                          :right     [:move-word-right]
+                                          :backspace [:delete-word-left]
+                                          :delete    [:delete-word-right])
 
-                             (core/when-case (and macos? ctrl? option? shift?) key
-                               :b [:expand-word-left]
-                               :f [:expand-word-right])
+                          (core/when-case (and macos? ctrl? option? shift?) key
+                                          :b [:expand-word-left]
+                                          :f [:expand-word-right])
 
-                             (core/when-case (and macos? ctrl? shift?) key
-                               :b [:expand-char-left]
-                               :f [:expand-char-right]
-                               :a [:expand-doc-start]
-                               :e [:expand-doc-end]
-                               :p [:expand-doc-start]
-                               :n [:expand-doc-end])
+                          (core/when-case (and macos? ctrl? shift?) key
+                                          :b [:expand-char-left]
+                                          :f [:expand-char-right]
+                                          :a [:expand-doc-start]
+                                          :e [:expand-doc-end]
+                                          :p [:expand-doc-start]
+                                          :n [:expand-doc-end])
 
-                             (core/when-case (and macos? ctrl? selection?) key
-                               :h [:kill]
-                               :d [:kill])
+                          (core/when-case (and macos? ctrl? selection?) key
+                                          :h [:kill]
+                                          :d [:kill])
 
-                             (core/when-case (and macos? ctrl? option?) key
-                               :b [:move-word-left]
-                               :f [:move-word-right])
+                          (core/when-case (and macos? ctrl? option?) key
+                                          :b [:move-word-left]
+                                          :f [:move-word-right])
 
-                             (core/when-case (and macos? ctrl?) key
-                               :b [:move-char-left]
-                               :f [:move-char-right]
-                               :a [:move-doc-start]
-                               :e [:move-doc-end]
-                               :p [:move-doc-start]
-                               :n [:move-doc-end]
-                               :h [:delete-char-left]
-                               :d [:delete-char-right]
-                               :k [:delete-doc-end])
+                          (core/when-case (and macos? ctrl?) key
+                                          :b [:move-char-left]
+                                          :f [:move-char-right]
+                                          :a [:move-doc-start]
+                                          :e [:move-doc-end]
+                                          :p [:move-doc-start]
+                                          :n [:move-doc-end]
+                                          :h [:delete-char-left]
+                                          :d [:delete-char-right]
+                                          :k [:delete-doc-end])
 
-                             (core/when-case (and macos? ctrl? (not selection?)) key
-                               :t [:transpose])
+                          (core/when-case (and macos? ctrl? (not selection?)) key
+                                          :t [:transpose])
 
-                             (core/when-case (and (not macos?) shift? ctrl?) key
-                               :z [:redo])
+                          (core/when-case (and (not macos?) shift? ctrl?) key
+                                          :z [:redo])
 
-                             (core/when-case (and (not macos?) ctrl?) key
-                               :a [:select-all]
-                               :z [:undo])
+                          (core/when-case (and (not macos?) ctrl?) key
+                                          :a [:select-all]
+                                          :z [:undo])
 
-                             (core/when-case true key
-                               :left      [:move-char-left]
-                               :right     [:move-char-right]
-                               :up        [:move-doc-start]
-                               :down      [:move-doc-end]
-                               :home      [:move-doc-start]
-                               :end       [:move-doc-end]
-                               :backspace [:kill-marked :delete-char-left]
-                               :delete    [:kill-marked :delete-char-right]))]
-            (or
-              (when(seq ops)
-                (swap! *state
-                  (fn [state]
-                    (reduce #(edit %1 %2 nil) state ops)))
-                true)
-              (some #{:letter :digit :whitespace} (:key-types event))))
+                          (core/when-case true key
+                                          :left      [:move-char-left]
+                                          :right     [:move-char-right]
+                                          :up        [:move-doc-start]
+                                          :down      [:move-doc-end]
+                                          :home      [:move-doc-start]
+                                          :end       [:move-doc-end]
+                                          :backspace [:kill-marked :delete-char-left]
+                                          :delete    [:kill-marked :delete-char-right]))]
+          (or
+           (when(seq ops)
+             (swap! *state
+                    (fn [state]
+                      (reduce #(edit %1 %2 nil) state ops)))
+             true)
+           (some #{:letter :digit :whitespace} (:key-types event))))
 
-          (and (= :key (:event event)) (not (:pressed? event)))
-          (some #{:letter :digit :whitespace} (:key-types event))))))
+        (and (= :key (:event event)) (not (:pressed? event)))
+        (some #{:letter :digit :whitespace} (:key-types event))))))
 
   (-iterate [this ctx cb]
     (cb this))
@@ -923,16 +924,22 @@
   ([*state]
    (text-field nil *state))
   ([opts *state]
-   (focusable/focusable opts
-     (with-cursor/with-cursor :ibeam
-       (dynamic/dynamic ctx [active? (:hui/focused? ctx)
-                             stroke  (if active?
-                                       (:hui.text-field/border-active ctx)
-                                       (:hui.text-field/border-inactive ctx))
-                             bg      (if active?
-                                       (:hui.text-field/fill-bg-active ctx)
-                                       (:hui.text-field/fill-bg-inactive ctx))
-                             radius  (:hui.text-field/border-radius ctx)]
-         (rect/rounded-rect {:radius radius} bg
-           (rect/rounded-rect {:radius radius} stroke
-             (text-input opts *state))))))))
+   (dynamic/dynamic
+    _ctx
+    [disabled? (:disabled? @*state)]
+    (let [child (with-cursor/with-cursor :ibeam
+                  (dynamic/dynamic ctx [active? (and (:hui/focused? ctx)
+                                                     (not (:disabled? @*state)))
+                                        stroke  (if active?
+                                                  (:hui.text-field/border-active ctx)
+                                                  (:hui.text-field/border-inactive ctx))
+                                        bg      (if active?
+                                                  (:hui.text-field/fill-bg-active ctx)
+                                                  (:hui.text-field/fill-bg-inactive ctx))
+                                        radius  (:hui.text-field/border-radius ctx)]
+                                   (rect/rounded-rect {:radius radius} bg
+                                                      (rect/rounded-rect {:radius radius} stroke
+                                                                         (text-input opts *state)))))]
+      (if disabled?
+       child
+       (focusable/focusable opts child))))))
