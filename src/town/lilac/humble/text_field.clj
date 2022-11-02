@@ -508,6 +508,7 @@
       offset)))
 
 (core/deftype+ TextField [*state
+                          on-change
                           ^ShapingOptions features
                           ^:mut ^IRect    my-rect]
   protocols/IComponent
@@ -708,6 +709,7 @@
                              true             (edit :insert (:text event))))
             (when-some [postponed (:postponed state)]
               (protocols/-event this ctx postponed))
+            (and on-change (on-change @*state))
             true)
 
           ;; composing region
@@ -880,7 +882,7 @@
 (defn text-input
   ([*state]
    (text-input nil *state))
-  ([opts *state]
+  ([{:keys [on-change] :as _opts} *state]
    (dynamic/dynamic ctx [features (:hui.text-field/font-features ctx)]
      (let [features (reduce #(.withFeatures ^ShapingOptions %1 ^String %2) ShapingOptions/DEFAULT features)]
        (swap! *state #(core/merge-some
@@ -912,7 +914,7 @@
                          :mouse-clicks       0
                          :last-mouse-click   0}
                         %))
-       (->TextField *state features nil)))))
+       (->TextField *state on-change features nil)))))
 
 (defn text-field
   ([*state]

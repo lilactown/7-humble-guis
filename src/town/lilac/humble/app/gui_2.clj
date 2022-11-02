@@ -18,9 +18,7 @@
        (ui/gap 5 5)
        (ui/width
         100
-        (ui/key-listener
-         {:on-key-down #(prn %)}
-         (tf/text-field *c))))
+        (tf/text-field {:on-change prn} *c)))
       (ui/gap 20 20)
       (ui/column
        (ui/label "Fahrenheit")
@@ -51,7 +49,9 @@
         *c (atom init)
         *c-input (atom {:text (str init)})
         *f-input (atom {:text (str (c->f init))})]
-    ;;(add-watch *c-input )
+    (add-watch *c-input :c->f
+               (fn [_ _ _ state]
+                 (reset! *f-input state)))
     (reset! state/*app (temp-converter *c-input *f-input)))
   (state/redraw!)
   (app/doui
