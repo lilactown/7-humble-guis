@@ -633,7 +633,7 @@
    [this ctx event]
                                         ; (when-not (#{:frame :frame-skija :window-focus-in :window-focus-out :mouse-move} (:event event))
                                         ;   (println (:hui/focused? ctx) event))
-   (when (and (:hui/focused? ctx) (not (:disabled? @*state)))
+   (when (and (:hui/focused? ctx) (not (:hui/disabled? ctx)))
      (let [state @*state
            {:keys [text from to marked-from marked-to offset ^TextLine line mouse-clicks last-mouse-click]} state]
        (when (= :mouse-move (:event event))
@@ -925,10 +925,10 @@
    (text-field nil *state))
   ([opts *state]
    (dynamic/dynamic
-    _ctx
-    [disabled? (:disabled? @*state)]
+    ctx
+    [disabled? (:hui/disabled? ctx)]
     (let [child (with-cursor/with-cursor :ibeam
-                  (dynamic/dynamic ctx [disabled? (:disabled? @*state)
+                  (dynamic/dynamic ctx [disabled? (:hui/disabled? ctx)
                                         error? (:error? @*state)
                                         active? (and (:hui/focused? ctx)
                                                      (not disabled?))
