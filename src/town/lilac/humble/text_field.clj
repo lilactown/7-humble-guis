@@ -928,10 +928,18 @@
     _ctx
     [disabled? (:disabled? @*state)]
     (let [child (with-cursor/with-cursor :ibeam
-                  (dynamic/dynamic ctx [active? (and (:hui/focused? ctx)
-                                                     (not (:disabled? @*state)))
-                                        stroke  (if active?
+                  (dynamic/dynamic ctx [disabled? (:disabled? @*state)
+                                        error? (:error? @*state)
+                                        active? (and (:hui/focused? ctx)
+                                                     (not disabled?))
+                                        stroke  (cond
+                                                  (and error? (not disabled?))
+                                                  (:hui.text-field/border-error ctx)
+
+                                                  active?
                                                   (:hui.text-field/border-active ctx)
+
+                                                  :else
                                                   (:hui.text-field/border-inactive ctx))
                                         bg      (if active?
                                                   (:hui.text-field/fill-bg-active ctx)
