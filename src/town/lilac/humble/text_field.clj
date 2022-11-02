@@ -929,7 +929,7 @@
     [disabled? (:hui/disabled? ctx)]
     (let [child (with-cursor/with-cursor :ibeam
                   (dynamic/dynamic ctx [disabled? (:hui/disabled? ctx)
-                                        error? (:error? @*state)
+                                        error? (:hui/error? ctx)
                                         active? (and (:hui/focused? ctx)
                                                      (not disabled?))
                                         stroke  (cond
