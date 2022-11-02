@@ -709,7 +709,10 @@
                              true             (edit :insert (:text event))))
             (when-some [postponed (:postponed state)]
               (protocols/-event this ctx postponed))
-            (and on-change (on-change @*state))
+            (and on-change
+                 (try (on-change @*state)
+                      (catch Throwable e
+                        (core/log-error e))))
             true)
 
           ;; composing region
