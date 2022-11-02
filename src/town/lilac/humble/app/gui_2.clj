@@ -48,9 +48,6 @@
   (let [init 5
         *c-input (atom {:text (str init)})
         *f-input (atom {:text (str (c->f init))})]
-    #_(add-watch *c-input :c->f
-               (fn [_ _ _ state]
-                 (reset! *f-input state)))
     (reset! state/*app (temp-converter
                         *c-input *f-input
                         (fn on-celsius-change
