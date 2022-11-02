@@ -7,7 +7,7 @@
    [town.lilac.humble.text-field :as tf]))
 
 (defn temp-converter
-  [*c *f]
+  [*c *f on-celsius on-fahrenheit]
   (ui/default-theme
    {}
    (ui/focus-controller
@@ -18,14 +18,14 @@
        (ui/gap 5 5)
        (ui/width
         100
-        (tf/text-field {:on-change prn} *c)))
+        (tf/text-field {:on-change on-celsius} *c)))
       (ui/gap 20 20)
       (ui/column
        (ui/label "Fahrenheit")
        (ui/gap 5 5)
        (ui/width
         100
-        (tf/text-field *f))))))))
+        (tf/text-field {:on-change on-fahrenheit} *f))))))))
 
 
 (defn c->f
@@ -46,13 +46,25 @@
 (defn start!
   []
   (let [init 5
-        *c (atom init)
         *c-input (atom {:text (str init)})
         *f-input (atom {:text (str (c->f init))})]
-    (add-watch *c-input :c->f
+    #_(add-watch *c-input :c->f
                (fn [_ _ _ state]
                  (reset! *f-input state)))
-    (reset! state/*app (temp-converter *c-input *f-input)))
+    (reset! state/*app (temp-converter
+                        *c-input *f-input
+                        (fn on-celsius-change
+                          [{:keys [text]}]
+                          (swap!
+                           *f-input
+                           assoc :text
+                           (str (c->f (Float/parseFloat text)))))
+                        (fn on-fahrenheit-change
+                          [{:keys [text]}]
+                          (swap!
+                           *c-input
+                           assoc :text
+                           (str (f->c (Float/parseFloat text))))))))
   (state/redraw!)
   (app/doui
    (window/set-content-size @state/*window 600 200)))
