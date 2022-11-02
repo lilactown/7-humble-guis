@@ -1,5 +1,6 @@
 (ns town.lilac.humble.app.gui-3
   (:require
+   [clojure.string :as string]
    [io.github.humbleui.app :as app]
    [io.github.humbleui.paint :as paint]
    [io.github.humbleui.ui :as ui]
@@ -44,64 +45,95 @@
 
 
 (defn flight-booker
-  [*return *start-input *return-input on-start on-return on-book]
+  [{:keys [*round-trip? *start-disabled? *start-input *return-disabled? *return-input on-start on-return on-book]}]
   (ui/default-theme
    {}
    (ui/dynamic
     ctx
-    [{:keys [scale]} ctx]
+    [{:keys [scale]} ctx
+     start-disabled? @*start-disabled?
+     return-disabled? @*return-disabled?
+     invalid? (or (:error? @*start-input)
+                  (string/blank? (:text @*start-input))
+                  (and @*round-trip?
+                       (:error? @*return-input))
+                  (and @*round-trip?
+                       (string/blank? (:text @*return-input))))]
     (ui/with-context
-      {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))}
+      {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))
+       :hui.button/bg-inactive (paint/fill 0xFFBBBBBB)}
       (ui/focus-controller
       (ui/center
        (ui/column
         (ui/row
-         (ui/toggle *return)
+         (ui/toggle *round-trip?)
          (ui/gap 20 0)
          (ui/center
-          (ui/label "Return?")))
+          (ui/label "Round trip?")))
         (ui/gap 20 20)
-        (ui/column
-         (ui/label "Start")
-         (ui/gap 5 5)
-         (ui/width
-          200
-          (tf/text-field {:on-change on-start} *start-input)))
+        (disabled
+         start-disabled?
+         (ui/column
+          (ui/label "Start")
+          (ui/gap 5 5)
+          (ui/width
+           200
+           (tf/text-field {:on-change on-start} *start-input))))
         (ui/gap 20 20)
-        (ui/column
-         (ui/label "Return")
-         (ui/gap 5 5)
-         (ui/width
-          200
-          (tf/text-field {:on-change on-return} *return-input)))
+        (disabled
+         return-disabled?
+         (ui/column
+          (ui/label "Return")
+          (ui/gap 5 5)
+          (ui/width
+           200
+           (tf/text-field {:on-change on-return} *return-input))))
         (ui/gap 20 20)
-        (ui/button on-book (ui/label "Book")))))))))
+        (disabled
+         invalid?
+         (button on-book (ui/label "Book"))))))))))
+
+
+(defn parse-date
+  [text]
+  (re-matches #"(\d\d)\.(\d\d)\.(\d\d\d\d)" text))
+
+(comment
+  (parse-date "10.22.2022"))
 
 
 (defn start!
   []
-  (let [*return (atom false)
-        *start-input (atom {:text ""
-                            :error? true})
-        *return-input (atom {:text ""
-                             :disabled? true})
+  (let [*round-trip? (atom false)
+        *start-disabled? (atom false)
+        *start-input (atom {:text ""})
+        *return-disabled? (atom true)
+        *return-input (atom {:text ""})
         on-toggle (fn on-return-toggle
                     [return?]
-                    (swap! *return-input assoc :disabled? (not return?)))
+                    (reset! *return-disabled? (not return?)))
         on-start (fn on-start-change
                    [{:keys [text]}]
-                   )
+                   (if (parse-date text)
+                     (swap! *start-input assoc :error? false)
+                     (swap! *start-input assoc :error? true)))
         on-return (fn on-return-change
                     [{:keys [text]}]
-                    )
+                    (if (parse-date text)
+                     (swap! *return-input assoc :error? false)
+                     (swap! *return-input assoc :error? true)))
         on-book (fn on-book
                   [])]
-    (add-watch *return :toggle (fn [_ _ _ return?] (on-toggle return?)))
+    (add-watch *round-trip? :toggle (fn [_ _ _ round-trip?] (on-toggle round-trip?)))
     (reset! state/*app (flight-booker
-                        *return *start-input *return-input
-                        on-start
-                        on-return
-                        on-book)))
+                        {:*round-trip? *round-trip?
+                         :*start-disabled? *start-disabled?
+                         :*start-input *start-input
+                         :*return-disabled? *return-disabled?
+                         :*return-input *return-input
+                         :on-start on-start
+                         :on-return on-return
+                         :on-book on-book})))
   (state/redraw!)
   (app/doui
    (window/set-content-size @state/*window 600 600)))
