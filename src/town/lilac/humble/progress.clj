@@ -6,6 +6,8 @@
   (:import
    [io.github.humbleui.types IPoint IRect Point Rect RRect]))
 
+;; this code is based off of the humble slider
+
 (core/deftype+ ProgressTrack [fill-key]
   protocols/IComponent
   (-measure [_ ctx cs] cs)

@@ -20,16 +20,17 @@
      (ui/width
       350
       (ui/column
-       (ui/row (ui/label "Elapsed: ")
-               ;; progress bar is a little wider than it should be
-               (ui/gap 5 5)
-               (ui/dynamic
-                _ctx
-                [elapsed @*timer
-                 max (:value @*config)]
-                (progress/progress {:value elapsed
-                                    :max max}))
-               (ui/gap 5 5))
+       (ui/row
+        (ui/label "Elapsed: ")
+        ;; progress bar is a little wider than it should be
+        (ui/gap 5 5)
+        (ui/dynamic
+         _ctx
+         [elapsed @*timer
+          max (:value @*config)]
+         (progress/progress {:value elapsed
+                             :max max}))
+        (ui/gap 5 5))
        (ui/gap 10 10)
        (ui/dynamic
         _ctx
