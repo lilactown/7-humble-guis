@@ -4,13 +4,14 @@
    [io.github.humbleui.paint :as paint]
    [io.github.humbleui.ui :as ui]
    [io.github.humbleui.window :as window]
-   [town.lilac.humble.app.state :as state]))
+   [town.lilac.humble.app.state :as state]
+   [town.lilac.humble.ui :as ui2]))
 
 
 (defn crud
   [{:keys [*db *name *surname on-create on-select on-update on-delete]}]
   (ui/default-theme
-   {}
+   {:hui.button/bg-inactive (paint/fill 0xFFBBBBBB)}
    (ui/focus-controller
     (ui/center
      (ui/column
@@ -66,9 +67,17 @@
       (ui/row
        (ui/button on-create (ui/label "Create"))
        (ui/gap 10 10)
-       (ui/button on-update (ui/label "Update"))
+       (ui/dynamic
+        _ctx
+        [selected? (:selected @*db)]
+        (ui2/disabled (not selected?) (ui2/button on-update (ui/label "Update"))))
        (ui/gap 10 10)
-       (ui/button on-delete (ui/label "Delete"))))))))
+       (ui/dynamic
+        _ctx
+        [selected? (:selected @*db)]
+        (ui2/disabled
+         (not selected?)
+         (ui2/button on-delete (ui/label "Delete"))))))))))
 
 
 (defn start!
