@@ -41,25 +41,32 @@
         (ui/button on-reset (ui/label "Reset"))))))))
 
 
+(defonce *halt! nil)
+
+
 (defn start!
   []
   (let [*config (atom {:max (* 60 1000 5) ; 5 min
                        :value (* 60 1000) ; 1 min
                        })
         *timer (atom 0)
+        *inner-halt! (atom false)
         run-timer! (fn run-timer! []
                      (future
                        (Thread/sleep 100)
+                       (prn :tick)
                        (when (< @*timer (:value @*config))
                          (swap! *timer + 100))
-                       (run-timer!)))
+                       (when-not @*inner-halt!
+                         (run-timer!))))
         on-reset #(reset! *timer 0)]
     (add-watch *timer ::redraw (fn [_ _ _ _] (state/redraw!)))
     (reset! state/*app (timer *config *timer on-reset))
-    (run-timer!))
+    (run-timer!)
+    (alter-var-root #'*halt! (constantly *inner-halt!)))
   (state/redraw!)
   (app/doui
    (window/set-content-size @state/*window 800 400)))
 
-
+(and *halt! (reset! *halt! true))
 (start!)
