@@ -870,6 +870,7 @@
              (swap! *state
                     (fn [state]
                       (reduce #(edit %1 %2 nil) state ops)))
+             (and on-change (on-change @*state))
              true)
            (some #{:letter :digit :whitespace} (:key-types event))))
 
