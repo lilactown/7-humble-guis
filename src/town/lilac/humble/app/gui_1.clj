@@ -5,8 +5,6 @@
    [io.github.humbleui.window :as window]
    [town.lilac.humble.app.state :as state]))
 
-(def *count (atom 0))
-
 (defn counter
   [*count]
   (ui/default-theme
