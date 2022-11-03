@@ -10,74 +10,73 @@
 
 (defn crud
   [{:keys [*db *name *surname on-create on-select on-update on-delete]}]
-  (ui/default-theme
-   {:hui.button/bg-inactive (paint/fill 0xFFBBBBBB)}
-   (ui/focus-controller
-    (ui/center
-     (ui/column
-      (ui/row
-       (ui/valign 0.5 (ui/label "Filter prefix:"))
-       (ui/gap 10 10)
-       (ui/width
-        120
-        (ui/text-field (atom {:text ""}))))
-      (ui/gap 20 20)
-      (ui/row
-       (ui/column
-        (ui/width
-         200
-         (ui/height
-          100
-          (ui/vscrollbar
-           (ui/vscroll
-            (ui/dynamic
-             _ctx
-             [{:keys [entries selected]} @*db]
-             (ui/column
-              (for [[i {:keys [name surname]}] (map-indexed vector entries)
-                    :let [label (ui/padding
-                                 8
-                                 (ui/label (str surname ", " name)))]]
-                (ui/hoverable
-                 (ui/clickable
-                  {:on-click (fn [_] (on-select i))}
-                  (ui/dynamic
-                   ctx
-                   [hovered? (:hui/hovered? ctx)]
-                   (cond
-                     (= selected i)
-                     (ui/rect (paint/fill 0xFFAACCFF) label)
-
-                     hovered?
-                     (ui/rect (paint/fill 0xFFCFE8FC) label)
-
-                     :else
-                     label))))))))))))
-       (ui/gap 5 5)
-       (ui/column
-        (ui/row
-         [:stretch 1 (ui/valign 0.5 (ui/label "Name:"))]
-         (ui/width 100 (ui/text-field *name)))
+  (ui2/with-theme
+    (ui/focus-controller
+     (ui/center
+      (ui/column
+       (ui/row
+        (ui/valign 0.5 (ui/label "Filter prefix:"))
         (ui/gap 10 10)
-        (ui/row
-         [:stretch 1 (ui/valign 0.5 (ui/label "Surname:"))]
+        (ui/width
+         120
+         (ui/text-field (atom {:text ""}))))
+       (ui/gap 20 20)
+       (ui/row
+        (ui/column
+         (ui/width
+          200
+          (ui/height
+           100
+           (ui/vscrollbar
+            (ui/vscroll
+             (ui/dynamic
+              _ctx
+              [{:keys [entries selected]} @*db]
+              (ui/column
+               (for [[i {:keys [name surname]}] (map-indexed vector entries)
+                     :let [label (ui/padding
+                                  8
+                                  (ui/label (str surname ", " name)))]]
+                 (ui/hoverable
+                  (ui/clickable
+                   {:on-click (fn [_] (on-select i))}
+                   (ui/dynamic
+                    ctx
+                    [hovered? (:hui/hovered? ctx)]
+                    (cond
+                      (= selected i)
+                      (ui/rect (paint/fill 0xFFAACCFF) label)
+
+                      hovered?
+                      (ui/rect (paint/fill 0xFFCFE8FC) label)
+
+                      :else
+                      label))))))))))))
+        (ui/gap 5 5)
+        (ui/column
+         (ui/row
+          [:stretch 1 (ui/valign 0.5 (ui/label "Name:"))]
+          (ui/width 100 (ui/text-field *name)))
          (ui/gap 10 10)
-         (ui/width 100 (ui/text-field *surname)))))
-      (ui/gap 20 20)
-      (ui/row
-       (ui/button on-create (ui/label "Create"))
-       (ui/gap 10 10)
-       (ui/dynamic
-        _ctx
-        [selected? (:selected @*db)]
-        (ui2/disabled (not selected?) (ui2/button on-update (ui/label "Update"))))
-       (ui/gap 10 10)
-       (ui/dynamic
-        _ctx
-        [selected? (:selected @*db)]
-        (ui2/disabled
-         (not selected?)
-         (ui2/button on-delete (ui/label "Delete"))))))))))
+         (ui/row
+          [:stretch 1 (ui/valign 0.5 (ui/label "Surname:"))]
+          (ui/gap 10 10)
+          (ui/width 100 (ui/text-field *surname)))))
+       (ui/gap 20 20)
+       (ui/row
+        (ui/button on-create (ui/label "Create"))
+        (ui/gap 10 10)
+        (ui/dynamic
+         _ctx
+         [selected? (:selected @*db)]
+         (ui2/disabled (not selected?) (ui2/button on-update (ui/label "Update"))))
+        (ui/gap 10 10)
+        (ui/dynamic
+         _ctx
+         [selected? (:selected @*db)]
+         (ui2/disabled
+          (not selected?)
+          (ui2/button on-delete (ui/label "Delete"))))))))))
 
 
 (defn start!

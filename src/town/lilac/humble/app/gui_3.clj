@@ -57,64 +57,62 @@
            on-start
            on-return
            on-book]}]
-  (ui/default-theme
-   {:hui.button/bg-inactive (paint/fill 0xFFBBBBBB)
-    :hui.text-field/fill-bg-disabled (paint/fill 0xFFE0E0E0)}
-   (let [start (ui/column
-                (ui/label "Start")
-                (ui/gap 5 5)
-                (ui/width
-                 200
-                 (ui2/text-field {:on-change on-start} *start-input)))
-         return (ui/column
-                 (ui/label "Return")
+  (ui2/with-theme
+    (let [start (ui/column
+                 (ui/label "Start")
                  (ui/gap 5 5)
                  (ui/width
                   200
-                  (ui2/text-field {:on-change on-return} *return-input))) ]
-     (ui/dynamic
-      ctx
-      [{:keys [scale]} ctx
-       booked @*booked
-       start-disabled? (:disabled? @*start-input)
-       start-error? (:error? @*start-input)
-       return-disabled? (:disabled? @*return-input)
-       return-error? (:error? @*return-input)
-       invalid? (or (:error? @*start-input)
-                    (string/blank? (:text @*start-input))
-                    (and @*round-trip?
-                         (:error? @*return-input))
-                    (and @*round-trip?
-                         (string/blank? (:text @*return-input)))
-                    (and @*round-trip?
-                         (not (before? (:text @*start-input)
-                                       (:text @*return-input)))))]
-      (ui/with-context
-        {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))}
-        (ui/focus-controller
-         (ui/center
-          (ui/column
-           (ui/row
-            (ui/toggle *round-trip?)
-            (ui/gap 20 0)
-            (ui/center
-             (ui/label "Round trip?")))
-           (ui/gap 20 20)
-           (ui2/disabled start-disabled? (ui2/invalid start-error? start))
-           (ui/gap 20 20)
-           (ui2/disabled return-disabled? (ui2/invalid return-error? return))
-           (ui/gap 20 20)
-           (ui2/disabled invalid? (ui2/button on-book (ui/label "Book")))
-           (ui/gap 10 10)
-           (ui/width
-            200
-            (ui/height
-             30
-             (ui/column
-              (for [line (string/split-lines (or booked ""))]
-                (ui/column
-                 (ui/gap 5 5)
-                 (ui/label line))))))))))))))
+                  (ui2/text-field {:on-change on-start} *start-input)))
+          return (ui/column
+                  (ui/label "Return")
+                  (ui/gap 5 5)
+                  (ui/width
+                   200
+                   (ui2/text-field {:on-change on-return} *return-input))) ]
+      (ui/dynamic
+       ctx
+       [{:keys [scale]} ctx
+        booked @*booked
+        start-disabled? (:disabled? @*start-input)
+        start-error? (:error? @*start-input)
+        return-disabled? (:disabled? @*return-input)
+        return-error? (:error? @*return-input)
+        invalid? (or (:error? @*start-input)
+                     (string/blank? (:text @*start-input))
+                     (and @*round-trip?
+                          (:error? @*return-input))
+                     (and @*round-trip?
+                          (string/blank? (:text @*return-input)))
+                     (and @*round-trip?
+                          (not (before? (:text @*start-input)
+                                        (:text @*return-input)))))]
+       (ui/with-context
+         {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))}
+         (ui/focus-controller
+          (ui/center
+           (ui/column
+            (ui/row
+             (ui/toggle *round-trip?)
+             (ui/gap 20 0)
+             (ui/center
+              (ui/label "Round trip?")))
+            (ui/gap 20 20)
+            (ui2/disabled start-disabled? (ui2/invalid start-error? start))
+            (ui/gap 20 20)
+            (ui2/disabled return-disabled? (ui2/invalid return-error? return))
+            (ui/gap 20 20)
+            (ui2/disabled invalid? (ui2/button on-book (ui/label "Book")))
+            (ui/gap 10 10)
+            (ui/width
+             200
+             (ui/height
+              30
+              (ui/column
+               (for [line (string/split-lines (or booked ""))]
+                 (ui/column
+                  (ui/gap 5 5)
+                  (ui/label line))))))))))))))
 
 
 (defn start!
