@@ -50,7 +50,8 @@
 
 
 (defn flight-booker
-  [{:keys [*round-trip?
+  [{:keys [*booked
+           *round-trip?
            *start-input
            *return-input
            on-start
@@ -74,6 +75,7 @@
      (ui/dynamic
       ctx
       [{:keys [scale]} ctx
+       booked @*booked
        start-disabled? (:disabled? @*start-input)
        start-error? (:error? @*start-input)
        return-disabled? (:disabled? @*return-input)
@@ -95,17 +97,21 @@
             (ui/center
              (ui/label "Round trip?")))
            (ui/gap 20 20)
-           (disabled
-            start-disabled?
-            (invalid start-error? start))
+           (disabled start-disabled? (invalid start-error? start))
            (ui/gap 20 20)
-           (disabled
-            return-disabled?
-            (invalid return-error? return))
+           (disabled return-disabled? (invalid return-error? return))
            (ui/gap 20 20)
-           (disabled
-            invalid?
-            (button on-book (ui/label "Book")))))))))))
+           (disabled invalid? (button on-book (ui/label "Book")))
+           (ui/gap 10 10)
+           (ui/width
+            200
+            (ui/height
+             30
+             (ui/column
+              (for [line (string/split-lines (or booked ""))]
+                (ui/column
+                 (ui/gap 5 5)
+                 (ui/label line))))))))))))))
 
 
 (defn parse-date
@@ -123,6 +129,7 @@
                             :disabled? false})
         *return-input (atom {:text ""
                              :disabled? true})
+        *booked (atom nil)
         on-toggle (fn on-return-toggle
                     [return?]
                     (swap! *return-input assoc :disabled? (not return?)))
@@ -137,10 +144,17 @@
                      (swap! *return-input assoc :error? false)
                      (swap! *return-input assoc :error? true)))
         on-book (fn on-book
-                  [])]
+                  []
+                  (reset! *booked (str "You have booked a "
+                                       (if @*round-trip? "round-trip" "one-way")
+                                       "\nflight on " (:text @*start-input)
+                                       (if @*round-trip?
+                                         (str ", returning\non " (:text @*return-input))
+                                         ""))))]
     (add-watch *round-trip? :toggle (fn [_ _ _ round-trip?] (on-toggle round-trip?)))
     (reset! state/*app (flight-booker
-                        {:*round-trip? *round-trip?
+                        {:*booked *booked
+                         :*round-trip? *round-trip?
                          :*start-input *start-input
                          :*return-input *return-input
                          :on-start on-start
