@@ -2,6 +2,7 @@
   (:require
    [io.github.humbleui.paint :as paint]
    [io.github.humbleui.ui :as ui]
+   [town.lilac.humble.progress :as progress]
    [town.lilac.humble.text-field :as tf]))
 
 
@@ -60,6 +61,8 @@
              :hui/hovered? false}
             child))))))))))
 
+
+(def ^{:arglists '([opts])} progress progress/progress)
 
 (def ^{:arglists '([*state] [opts *state])} text-field
   tf/text-field)

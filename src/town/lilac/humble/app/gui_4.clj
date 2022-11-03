@@ -1,11 +1,9 @@
 (ns town.lilac.humble.app.gui-4
   (:require
    [io.github.humbleui.app :as app]
-   [io.github.humbleui.paint :as paint]
    [io.github.humbleui.ui :as ui]
    [io.github.humbleui.window :as window]
    [town.lilac.humble.app.state :as state]
-   [town.lilac.humble.progress :as progress]
    [town.lilac.humble.ui :as ui2]))
 
 (defn timer
@@ -26,8 +24,8 @@
           _ctx
           [elapsed @*timer
            max (:value @*config)]
-          (progress/progress {:value elapsed
-                              :max max}))
+          (ui2/progress {:value elapsed
+                         :max max}))
          (ui/gap 5 5))
         (ui/gap 10 10)
         (ui/dynamic
