@@ -9,6 +9,47 @@
    [town.lilac.humble.text-field :as tf]))
 
 
+(defn parse-date
+  [text]
+  (re-matches #"(\d\d)\.(\d\d)\.(\d\d\d\d)" text))
+
+(comment
+  (parse-date "10.22.2022")
+  ;; => ["10.22.2022" "10" "22" "2022"]
+  )
+
+(defn before?
+  [start-text return-text]
+  (let [[mm0 dd0 yyyy0] (->> (parse-date start-text)
+                             (rest)
+                             (map #(Integer/parseInt %)))
+        [mm1 dd1 yyyy1] (->> (parse-date return-text)
+                             (rest)
+                             (map #(Integer/parseInt %)))]
+    (when (and mm0 mm1 dd0 dd1 yyyy0 yyyy1)
+      (or
+       (< yyyy0 yyyy1)
+       (and (= yyyy0 yyyy1)
+            (< mm0 mm1))
+       (and (= yyyy0 yyyy1)
+            (= mm0 mm1)
+            (<= dd0 dd1))))))
+
+(comment
+  (before? "arst" "mnei")
+  ;; => nil
+
+  (before? "10.23.2023" "10.11.2022")
+  ;; => false
+
+  (before? "10.23.2023" "10.24.2023")
+  ;; => true
+
+  (before? "10.23.2022" "10.12.2023")
+  ;; => true
+  )
+
+
 (defn disabled
   [disabled? child]
   (ui/with-context {:hui/disabled? disabled?} child))
@@ -20,6 +61,7 @@
 
 
 (defn button
+  "Copied from HumbleUI, with disabled state."
   ([on-click child]
    (button on-click nil child))
   ([on-click opts child]
@@ -85,7 +127,10 @@
                     (and @*round-trip?
                          (:error? @*return-input))
                     (and @*round-trip?
-                         (string/blank? (:text @*return-input))))]
+                         (string/blank? (:text @*return-input)))
+                    (and @*round-trip?
+                         (not (before? (:text @*start-input)
+                                       (:text @*return-input)))))]
       (ui/with-context
         {:hui.text-field/border-error (paint/stroke 0xFFFF0000 (* 1 scale))}
         (ui/focus-controller
@@ -114,20 +159,12 @@
                  (ui/label line))))))))))))))
 
 
-(defn parse-date
-  [text]
-  (re-matches #"(\d\d)\.(\d\d)\.(\d\d\d\d)" text))
-
-(comment
-  (parse-date "10.22.2022"))
-
-
 (defn start!
   []
   (let [*round-trip? (atom false)
-        *start-input (atom {:text ""
+        *start-input (atom {:text "10.23.2023"
                             :disabled? false})
-        *return-input (atom {:text ""
+        *return-input (atom {:text "10.23.2023"
                              :disabled? true})
         *booked (atom nil)
         on-toggle (fn on-return-toggle
@@ -141,8 +178,8 @@
         on-return (fn on-return-change
                     [{:keys [text]}]
                     (if (parse-date text)
-                     (swap! *return-input assoc :error? false)
-                     (swap! *return-input assoc :error? true)))
+                      (swap! *return-input assoc :error? false)
+                      (swap! *return-input assoc :error? true)))
         on-book (fn on-book
                   []
                   (reset! *booked (str "You have booked a "
