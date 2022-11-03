@@ -1,5 +1,6 @@
 (ns town.lilac.humble.app.gui-5
   (:require
+   [clojure.string :as string]
    [io.github.humbleui.app :as app]
    [io.github.humbleui.paint :as paint]
    [io.github.humbleui.ui :as ui]
@@ -9,31 +10,32 @@
 
 
 (defn crud
-  [{:keys [*db *name *surname on-create on-select on-update on-delete]}]
+  [{:keys [*db *filter *name *surname on-create on-select on-update on-delete]}]
   (ui2/with-theme
     (ui/focus-controller
-     (ui/center
+     (ui/padding
+      15
       (ui/column
        (ui/row
         (ui/valign 0.5 (ui/label "Filter prefix:"))
         (ui/gap 10 10)
         (ui/width
          120
-         (ui/text-field (atom {:text ""}))))
+         (ui/text-field *filter)))
        (ui/gap 20 20)
-       (ui/row
-        (ui/column
-         (ui/width
-          200
-          (ui/height
-           100
+       [:stretch 1
+        (ui/row
+         [:stretch 1
+          (ui/column
            (ui/vscrollbar
             (ui/vscroll
              (ui/dynamic
               _ctx
-              [{:keys [entries selected]} @*db]
+              [{:keys [entries selected]} @*db
+               filter-text (:text @*filter)]
               (ui/column
                (for [[i {:keys [name surname]}] (map-indexed vector entries)
+                     :when (string/starts-with? surname filter-text)
                      :let [label (ui/padding
                                   8
                                   (ui/label (str surname ", " name)))]]
@@ -51,17 +53,17 @@
                       (ui/rect (paint/fill 0xFFCFE8FC) label)
 
                       :else
-                      label))))))))))))
-        (ui/gap 5 5)
-        (ui/column
-         (ui/row
-          [:stretch 1 (ui/valign 0.5 (ui/label "Name:"))]
-          (ui/width 100 (ui/text-field *name)))
-         (ui/gap 10 10)
-         (ui/row
-          [:stretch 1 (ui/valign 0.5 (ui/label "Surname:"))]
+                      label))))))))))]
+         (ui/gap 5 5)
+         (ui/column
+          (ui/row
+           [:stretch 1 (ui/valign 0.5 (ui/label "Name:"))]
+           (ui/width 100 (ui/text-field *name)))
           (ui/gap 10 10)
-          (ui/width 100 (ui/text-field *surname)))))
+          (ui/row
+           [:stretch 1 (ui/valign 0.5 (ui/label "Surname:"))]
+           (ui/gap 10 10)
+           (ui/width 100 (ui/text-field *surname)))))]
        (ui/gap 20 20)
        (ui/row
         (ui/button on-create (ui/label "Create"))
@@ -84,9 +86,11 @@
   (let [*db (atom {:entries [{:name "Hans" :surname "Emil"}
                              {:name "Max" :surname "Mustermann"}
                              {:name "Roman" :surname "Tisch"}]
-                   :selected nil})
+                   :selected nil
+                   :filter ""})
         *name (atom {:text ""})
         *surname (atom {:text ""})
+        *filter (atom {:text ""})
         on-select (fn [i]
                     (swap! *db assoc :selected i)
                     (swap! *name assoc :text (get-in @*db [:entries i :name]))
@@ -108,6 +112,7 @@
                                     (subvec % (inc i))))
                       (swap! *db assoc :selected nil)))]
     (reset! state/*app (crud {:*db *db
+                              :*filter *filter
                               :*name *name
                               :*surname *surname
                               :on-create on-create
