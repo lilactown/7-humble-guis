@@ -1,7 +1,22 @@
 (ns town.lilac.humble.ui
   (:require
+   [io.github.humbleui.paint :as paint]
    [io.github.humbleui.ui :as ui]
    [town.lilac.humble.text-field :as tf]))
+
+
+(defn with-theme
+  [child]
+  (ui/dynamic
+   ctx
+   [scale (:scale ctx)]
+   (ui/default-theme
+    {:hui.button/bg-inactive (paint/fill 0xFFBBBBBB)
+     :hui.progress/track-height (* 10 scale)
+     :hui.progress/fill-track-active (paint/fill 0xFF0080FF)
+     :hui.progress/fill-track-inactive (paint/fill 0xFFD9D9D9)
+     :hui.text-field/fill-bg-disabled (paint/fill 0xFFE0E0E0)}
+    child)))
 
 
 (defn disabled
