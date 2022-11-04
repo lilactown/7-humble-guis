@@ -1,9 +1,14 @@
 (ns town.lilac.humble.ui
   (:require
+   [io.github.humbleui.core :as core]
    [io.github.humbleui.paint :as paint]
+   [io.github.humbleui.protocols :as protocols]
    [io.github.humbleui.ui :as ui]
    [town.lilac.humble.progress :as progress]
-   [town.lilac.humble.text-field :as tf]))
+   [town.lilac.humble.text-field :as tf])
+  (:import
+   [io.github.humbleui.skija Canvas]
+   [io.github.humbleui.types IRect]))
 
 
 (defn with-theme
@@ -66,3 +71,42 @@
 
 (def ^{:arglists '([*state] [opts *state])} text-field
   tf/text-field)
+
+(core/deftype+ AbsolutePosition [opts child ^:mut my-rect]
+  protocols/IComponent
+  (-measure
+   [_ ctx cs]
+   (core/measure child ctx cs))
+
+  (-draw
+   [_ ctx ^IRect rect ^Canvas canvas]
+   (let [rect' (assoc rect
+                      :x (:x opts)
+                      :y (:y opts)
+                      :right (:right opts)
+                      :bottom (:bottom opts))]
+     (set! my-rect rect')
+     (core/draw-child
+      child ctx
+      rect'
+      canvas)))
+
+  (-event
+   [_ ctx event]
+   (core/event-child child ctx event))
+
+  (-iterate
+   [this ctx cb]
+   (or
+    (cb this)
+    (protocols/-iterate child ctx cb))))
+
+
+(defn absolute
+  [{:keys [x y] :as opts} child]
+  (->AbsolutePosition opts child nil))
+
+
+(defn stack
+  [children]
+  (apply ui/stack children))
