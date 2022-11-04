@@ -72,7 +72,7 @@
 (def ^{:arglists '([*state] [opts *state])} text-field
   tf/text-field)
 
-(core/deftype+ AbsolutePosition [opts child ^:mut my-rect]
+(core/deftype+ AbsoluteRect [opts child ^:mut my-rect]
   protocols/IComponent
   (-measure
    [_ ctx cs]
@@ -102,9 +102,9 @@
     (protocols/-iterate child ctx cb))))
 
 
-(defn absolute
+(defn absolute-rect
   [{:keys [x y] :as opts} child]
-  (->AbsolutePosition opts child nil))
+  (->AbsoluteRect opts child nil))
 
 
 (defn fragment

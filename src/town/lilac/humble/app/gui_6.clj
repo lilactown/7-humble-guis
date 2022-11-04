@@ -83,9 +83,9 @@
                 selected (:selected @*state)
                 menu? (:menu? @*state)]
           (ui2/fragment
-           (for [[i c] (map-indexed vector circles)]
-             (ui2/absolute
-              (select-keys c [:x :y :bottom :right])
+           (for [[i rect] (map-indexed vector circles)]
+             (ui2/absolute-rect
+              (select-keys rect [:x :y :bottom :right])
               (ui/clickable
                {:on-click (fn [e]
                             (case (:button e)
@@ -103,8 +103,7 @@
                   (ui/gap 0 0))
                 (circle
                  (when (= selected i)
-                   (paint/fill 0xFFDDDDDD)))
-                )))))))))]))))
+                   (paint/fill 0xFFDDDDDD))))))))))))]))))
 
 
 (defn start!
