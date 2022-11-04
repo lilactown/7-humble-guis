@@ -27,33 +27,36 @@
         (ui/row
          [:stretch 1
           (ui/column
-           (ui/vscrollbar
-            (ui/vscroll
-             (ui/dynamic
-              _ctx
-              [{:keys [entries selected]} @*db
-               filter-text (:text @*filter)]
-              (ui/column
-               (for [[i {:keys [name surname]}] (map-indexed vector entries)
-                     :when (string/starts-with? surname filter-text)
-                     :let [label (ui/padding
-                                  8
-                                  (ui/label (str surname ", " name)))]]
-                 (ui/hoverable
-                  (ui/clickable
-                   {:on-click (fn [_] (on-select i))}
-                   (ui/dynamic
-                    ctx
-                    [hovered? (:hui/hovered? ctx)]
-                    (cond
-                      (= selected i)
-                      (ui/rect (paint/fill 0xFFAACCFF) label)
+           (ui/rounded-rect
+            {:radius 4}
+            (paint/stroke 0xFFCCCCCC 2)
+            (ui/vscrollbar
+             (ui/vscroll
+              (ui/dynamic
+               _ctx
+               [{:keys [entries selected]} @*db
+                filter-text (:text @*filter)]
+               (ui/column
+                (for [[i {:keys [name surname]}] (map-indexed vector entries)
+                      :when (string/starts-with? surname filter-text)
+                      :let [label (ui/padding
+                                   8
+                                   (ui/label (str surname ", " name)))]]
+                  (ui/hoverable
+                   (ui/clickable
+                    {:on-click (fn [_] (on-select i))}
+                    (ui/dynamic
+                     ctx
+                     [hovered? (:hui/hovered? ctx)]
+                     (cond
+                       (= selected i)
+                       (ui/rect (paint/fill 0xFFAACCFF) label)
 
-                      hovered?
-                      (ui/rect (paint/fill 0xFFCFE8FC) label)
+                       hovered?
+                       (ui/rect (paint/fill 0xFFCFE8FC) label)
 
-                      :else
-                      label))))))))))]
+                       :else
+                       label)))))))))))]
          (ui/gap 5 5)
          (ui/column
           (ui/row
