@@ -82,7 +82,7 @@
   (apply ui/stack children))
 
 (defn circles
-  [{:keys [on-add-circle]} *state]
+  [{:keys [on-add-circle on-undo]} *state]
   (ui/default-theme
    {}
    (ui/padding
@@ -90,7 +90,7 @@
     (ui/column
      (ui/center
       (ui/row
-       (ui/button nil (ui/label "Undo"))
+       (ui/button on-undo (ui/label "Undo"))
        (ui/gap 10 10)
        (ui/button nil (ui/label "Redo"))))
      (ui/gap 10 10)
@@ -114,13 +114,28 @@
 
 (defn start!
   []
-  (let [*state (atom {:circles [{:x 120 :y 120 :r 10}]})]
+  (let [*state (atom {:circles [{:x 120 :y 120 :r 10}]
+                      :undo-history ()
+                      :redo-history ()})]
     (reset! state/*app (circles
                         {:on-add-circle
                          (fn [x y]
-                           (swap! *state update :circles conj {:x x
-                                                               :y y
-                                                               :r 20}))}
+                           (swap! *state
+                                  update :undo-history conj (:circles @*state))
+                           (swap! *state
+                                  update :circles conj {:x x
+                                                        :y y
+                                                        :r 20}))
+                         :on-undo
+                         #(swap!
+                           *state
+                           (fn [state]
+                             (if-let [circles (peek (:undo-history state))]
+                               (-> state
+                                   (assoc :circles circles)
+                                   (update :undo-history pop)
+                                   (update :redo-history conj circles))
+                               state)))}
                         *state)))
   (state/redraw!)
   (app/doui
