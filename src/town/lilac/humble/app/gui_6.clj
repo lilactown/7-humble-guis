@@ -12,7 +12,7 @@
    [io.github.humbleui.skija Canvas]
    [io.github.humbleui.types IRect]))
 
-(core/deftype+ Circle [^:mut my-rect]
+(core/deftype+ Circle [fill stroke ^:mut my-rect]
   protocols/IComponent
   (-measure
    [_ ctx cs]
@@ -29,7 +29,13 @@
       canvas
       ;; TODO scale
       (+ (:x rect) r) (+ (:y rect) r) r
-      (paint/stroke 0xFFAAAAAA 2))))
+      (or stroke (paint/stroke 0xFF999999 2)))
+     (when fill
+       (canvas/draw-circle
+        canvas
+        ;; TODO scale
+        (+ (:x rect) r) (+ (:y rect) r) r
+        fill))))
 
   (-event [_ ctx event])
 
@@ -38,8 +44,8 @@
    (cb this)))
 
 (defn circle
-  []
-  (->Circle nil))
+  [fill stroke]
+  (->Circle fill stroke nil))
 
 
 (core/deftype+ AbsolutePosition [opts child ^:mut my-rect]
@@ -81,8 +87,8 @@
   (apply ui/stack children))
 
 
-(defn circles
-  [{:keys [on-add-circle on-undo on-redo]} *state]
+(defn app
+  [{:keys [on-add-circle on-undo on-redo on-select]} *state]
   (ui/default-theme
    {}
    (ui/padding
@@ -105,22 +111,31 @@
         (paint/stroke 0xFFCCCCCC 2)
         (ui/row
          (ui/dynamic
-          _ctx [circles (:circles @*state)]
+          _ctx [circles (:circles @*state)
+                selected (:selected @*state)]
           (stack
-           (for [c circles]
+           (for [[i c] (map-indexed vector circles)]
              (absolute
               (select-keys c [:x :y :bottom :right])
               (ui/clickable
-               {:on-click (fn [_] (prn "hi"))}
-               (circle)))))))))]))))
+               {:on-click (fn [e]
+                            (case (:button e)
+                              :primary (on-select i)
+                              :secondary nil ; on-show-menu
+                              nil))}
+               (circle
+                (when (= selected i)
+                  (paint/fill 0xFFDDDDDD))
+                nil)))))))))]))))
 
 
 (defn start!
   []
   (let [*state (atom {:circles [{:x 120 :y 120 :bottom 160 :right 160}]
                       :undo-history '({:x 120 :y 120 :bottom 160 :right 160})
-                      :redo-history ()})]
-    (reset! state/*app (circles
+                      :redo-history ()
+                      :selected nil})]
+    (reset! state/*app (app
                         {:on-add-circle
                          (fn [x y right bottom]
                            (swap!
@@ -133,14 +148,16 @@
                                                          :bottom bottom})
                                   (update :undo-history conj
                                           (:circles state))
-                                  (assoc :redo-history ())))))
+                                  (assoc :redo-history ()
+                                         :selected nil)))))
                          :on-undo
                          #(swap!
                            *state
                            (fn [state]
                              (if-let [circles (peek (:undo-history state))]
                                (-> state
-                                   (assoc :circles circles)
+                                   (assoc :circles circles
+                                          :selected nil)
                                    (update :undo-history pop)
                                    (update :redo-history conj (:circles state)))
                                state)))
@@ -153,8 +170,11 @@
                                (-> state
                                    (update :redo-history pop)
                                    (update :undo-history conj circles)
-                                   (assoc :circles circles))
-                               state)))}
+                                   (assoc :circles circles
+                                          :selected nil))
+                               state)))
+
+                         :on-select (fn [i] (swap! *state assoc :selected i))}
                         *state)))
   (state/redraw!)
   (app/doui
