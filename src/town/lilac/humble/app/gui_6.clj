@@ -155,7 +155,7 @@
                              (if-let [circles (peek (:redo-history state))]
                                (-> state
                                    (update :redo-history pop)
-                                   (update :undo-history conj circles)
+                                   (update :undo-history conj (:circles state))
                                    (assoc :circles circles
                                           :selected nil))
                                state)))
