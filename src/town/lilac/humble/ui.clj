@@ -107,6 +107,6 @@
   (->AbsolutePosition opts child nil))
 
 
-(defn stack
+(defn fragment
   [children]
   (apply ui/stack children))

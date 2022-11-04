@@ -13,6 +13,7 @@
    [io.github.humbleui.skija Canvas]
    [io.github.humbleui.types IRect]))
 
+
 (core/deftype+ Circle [fill stroke ^:mut my-rect]
   protocols/IComponent
   (-measure
@@ -45,12 +46,17 @@
    (cb this)))
 
 (defn circle
-  [fill stroke]
-  (->Circle fill stroke nil))
+  [fill]
+  (->Circle fill nil nil))
 
 
 (defn app
-  [{:keys [on-add-circle on-undo on-redo on-select]} *state]
+  [{:keys [on-add-circle
+           on-adjust-diameter
+           on-undo
+           on-redo
+           on-select
+           on-show-menu]} *state]
   (ui/default-theme
    {}
    (ui/padding
@@ -74,8 +80,9 @@
         (ui/row
          (ui/dynamic
           _ctx [circles (:circles @*state)
-                selected (:selected @*state)]
-          (ui2/stack
+                selected (:selected @*state)
+                menu? (:menu? @*state)]
+          (ui2/fragment
            (for [[i c] (map-indexed vector circles)]
              (ui2/absolute
               (select-keys c [:x :y :bottom :right])
@@ -83,20 +90,30 @@
                {:on-click (fn [e]
                             (case (:button e)
                               :primary (on-select i)
-                              :secondary nil ; on-show-menu
+                              :secondary (on-show-menu)
                               nil))}
-               (circle
-                (when (= selected i)
-                  (paint/fill 0xFFDDDDDD))
-                nil)))))))))]))))
+               (ui/relative-rect
+                {:shackle :bottom-right}
+                (if (and (= selected i) menu?)
+                  (ui/clickable
+                   {:on-click (fn [_] (on-adjust-diameter))}
+                   (ui/rect
+                    (paint/fill 0xFFE9E9E9)
+                    (ui/padding 10 10 (ui/label "Adjust diameter"))))
+                  (ui/gap 0 0))
+                (circle
+                 (when (= selected i)
+                   (paint/fill 0xFFDDDDDD)))
+                )))))))))]))))
 
 
 (defn start!
   []
   (let [*state (atom {:circles [{:x 120 :y 120 :bottom 160 :right 160}]
-                      :undo-history '({:x 120 :y 120 :bottom 160 :right 160})
+                      :undo-history ()
                       :redo-history ()
-                      :selected nil})]
+                      :selected nil
+                      :menu? false})]
     (reset! state/*app (app
                         {:on-add-circle
                          (fn [x y right bottom]
@@ -112,6 +129,10 @@
                                           (:circles state))
                                   (assoc :redo-history ()
                                          :selected nil)))))
+
+                         :on-adjust-diameter
+                         #(swap! *state assoc :menu? false)
+
                          :on-undo
                          #(swap!
                            *state
@@ -136,7 +157,8 @@
                                           :selected nil))
                                state)))
 
-                         :on-select (fn [i] (swap! *state assoc :selected i))}
+                         :on-select (fn [i] (swap! *state assoc :selected i))
+                         :on-show-menu #(swap! *state assoc :menu? true)}
                         *state)))
   (state/redraw!)
   (app/doui
