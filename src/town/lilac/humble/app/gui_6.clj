@@ -57,8 +57,7 @@
            on-redo
            on-select
            on-show-menu]} *state]
-  (ui/default-theme
-   {}
+  (ui2/with-theme
    (ui/padding
     10
     (ui/column
@@ -66,7 +65,12 @@
       (ui/row
        (ui/button on-undo (ui/label "Undo"))
        (ui/gap 10 10)
-       (ui/button on-redo (ui/label "Redo"))))
+       (ui/dynamic
+        _ctx
+        [disabled? (empty? (:redo-history @*state))]
+        (ui2/disabled
+         disabled?
+         (ui2/button on-redo (ui/label "Redo"))))))
      (ui/gap 10 10)
      [:stretch 1
       (ui/clickable
@@ -96,7 +100,7 @@
                 {:shackle :bottom-right}
                 (if (and (= selected i) menu?)
                   (ui/clickable
-                   {:on-click (fn [_] (on-adjust-diameter) true)}
+                   {:on-click (fn [_] (on-adjust-diameter))}
                    (ui/rect
                     (paint/fill 0xFFE9E9E9)
                     (ui/padding 10 10 (ui/label "Adjust diameter"))))
