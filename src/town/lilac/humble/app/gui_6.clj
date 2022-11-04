@@ -16,16 +16,15 @@
   protocols/IComponent
   (-measure
    [_ ctx cs]
-   (assoc
-    cs
-    ;; TODO scale
-    :height (* 2 (:radius opts))
-    :width (* 2 (:radius opts))))
+   cs)
 
   (-draw
    [this ctx ^IRect rect ^Canvas canvas]
    (set! my-rect rect)
-   (let [r (:radius opts)]
+   (let [{:keys [x y right bottom]} rect
+         width (- right x)
+         height (- bottom y)
+         r (/ (min width height) 2)]
      (canvas/draw-circle
       canvas
       ;; TODO scale
@@ -54,8 +53,8 @@
    (let [rect' (assoc rect
                       :x (:x opts)
                       :y (:y opts)
-                      :right (+ (:right rect) (:x opts))
-                      :bottom (+ (:bottom rect) (:y opts)))]
+                      :right (:right opts)
+                      :bottom (:bottom opts))]
      (set! my-rect rect')
      (core/draw-child
       child ctx
@@ -81,8 +80,9 @@
   [children]
   (apply ui/stack children))
 
+
 (defn circles
-  [{:keys [on-add-circle on-undo]} *state]
+  [{:keys [on-add-circle on-undo on-redo]} *state]
   (ui/default-theme
    {}
    (ui/padding
@@ -92,11 +92,14 @@
       (ui/row
        (ui/button on-undo (ui/label "Undo"))
        (ui/gap 10 10)
-       (ui/button nil (ui/label "Redo"))))
+       (ui/button on-redo (ui/label "Redo"))))
      (ui/gap 10 10)
      [:stretch 1
       (ui/clickable
-       {:on-click (fn [e] (on-add-circle (:x e) (:y e)))}
+       {:on-click (fn [e] (on-add-circle (- (:x e) 20)
+                                         (- (:y e) 20)
+                                         (+ (:x e) 20)
+                                         (+ (:y e) 20)))}
        (ui/rounded-rect
         {:radius 4}
         (paint/stroke 0xFFCCCCCC 2)
@@ -106,7 +109,7 @@
           (stack
            (for [c circles]
              (absolute
-              (select-keys c [:x :y])
+              (select-keys c [:x :y :bottom :right])
               (ui/clickable
                {:on-click (fn [_] (prn "hi"))}
                (circle {:radius (:r c)})))))))))]))))
@@ -114,18 +117,23 @@
 
 (defn start!
   []
-  (let [*state (atom {:circles [{:x 120 :y 120 :r 10}]
-                      :undo-history ()
+  (let [*state (atom {:circles [{:x 120 :y 120 :bottom 160 :right 160}]
+                      :undo-history '({:x 120 :y 120 :bottom 160 :right 160})
                       :redo-history ()})]
     (reset! state/*app (circles
                         {:on-add-circle
-                         (fn [x y]
-                           (swap! *state
-                                  update :undo-history conj (:circles @*state))
-                           (swap! *state
-                                  update :circles conj {:x x
-                                                        :y y
-                                                        :r 20}))
+                         (fn [x y right bottom]
+                           (swap!
+                            *state
+                            (fn [state]
+                              (-> state
+                                  (update :circles conj {:x x
+                                                         :y y
+                                                         :right right
+                                                         :bottom bottom})
+                                  (update :undo-history conj
+                                          (:circles state))
+                                  (assoc :redo-history ())))))
                          :on-undo
                          #(swap!
                            *state
@@ -134,7 +142,18 @@
                                (-> state
                                    (assoc :circles circles)
                                    (update :undo-history pop)
-                                   (update :redo-history conj circles))
+                                   (update :redo-history conj (:circles state)))
+                               state)))
+
+                         :on-redo
+                         #(swap!
+                           *state
+                           (fn [state]
+                             (if-let [circles (peek (:redo-history state))]
+                               (-> state
+                                   (update :redo-history pop)
+                                   (update :undo-history conj circles)
+                                   (assoc :circles circles))
                                state)))}
                         *state)))
   (state/redraw!)
