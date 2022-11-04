@@ -18,6 +18,7 @@
    [_ ctx cs]
    (assoc
     cs
+    ;; TODO scale
     :height (* 2 (:radius opts))
     :width (* 2 (:radius opts))))
   (-draw
@@ -26,14 +27,19 @@
    (let [r (:radius opts)]
      (canvas/draw-circle
       canvas
+      ;; TODO scale
       (+ (:x rect) r) (+ (:y rect) r) r
       (paint/stroke 0xFFAAAAAA 2))))
   (-event [_ ctx event])
-  (-iterate [_ ctx cb]))
+  (-iterate
+   [this ctx cb]
+   (cb this)))
 
 (defn circle
-  [opts]
-  (->Circle opts nil))
+  [{:keys [on-click radius] :as opts}]
+  (ui/clickable
+   {:on-click (when on-click (fn [_] (on-click)))}
+   (->Circle opts nil)))
 
 (defn circles
   [*state]
@@ -45,6 +51,7 @@
      (ui/center
       (ui/row
        (ui/button nil (ui/label "Undo"))
+       (ui/gap 10 10)
        (ui/button nil (ui/label "Redo"))))
      (ui/gap 10 10)
      [:stretch 1
@@ -54,7 +61,7 @@
        (ui/row
         (ui/dynamic
          _ctx [state @*state]
-         (circle {:radius 50}))))]))))
+         (circle {:radius 50 :on-click #(prn "hi")}))))]))))
 
 
 (defn start!
