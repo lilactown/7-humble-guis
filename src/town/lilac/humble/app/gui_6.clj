@@ -31,7 +31,7 @@
       canvas
       ;; TODO scale
       (+ (:x rect) r) (+ (:y rect) r) r
-      (or stroke (paint/stroke 0xFF999999 2)))
+      stroke)
      (when fill
        (canvas/draw-circle
         canvas
@@ -47,7 +47,7 @@
 
 (defn circle
   [fill]
-  (->Circle fill nil nil))
+  (->Circle fill (paint/stroke 0xFF999999 2) nil))
 
 
 (defn app
@@ -92,11 +92,11 @@
                               :primary (on-select i)
                               :secondary (on-show-menu)
                               nil))}
-               (ui/relative-rect
+               (ui2/relative-rect
                 {:shackle :bottom-right}
                 (if (and (= selected i) menu?)
                   (ui/clickable
-                   {:on-click (fn [_] (on-adjust-diameter))}
+                   {:on-click (fn [_] (on-adjust-diameter) true)}
                    (ui/rect
                     (paint/fill 0xFFE9E9E9)
                     (ui/padding 10 10 (ui/label "Adjust diameter"))))
