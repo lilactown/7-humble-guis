@@ -63,7 +63,12 @@
     (ui/column
      (ui/center
       (ui/row
-       (ui/button on-undo (ui/label "Undo"))
+       (ui/dynamic
+        _ctx
+        [disabled? (empty? (:undo-history @*state))]
+        (ui2/disabled
+         disabled?
+         (ui2/button on-undo (ui/label "Undo"))))
        (ui/gap 10 10)
        (ui/dynamic
         _ctx
