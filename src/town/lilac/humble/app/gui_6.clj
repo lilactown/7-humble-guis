@@ -39,10 +39,8 @@
    (cb this)))
 
 (defn circle
-  [{:keys [on-click radius] :as opts}]
-  (ui/clickable
-   {:on-click (when on-click (fn [_] (on-click)))}
-   (->Circle opts nil)))
+  [{:keys [radius] :as opts}]
+  (->Circle opts nil))
 
 
 (core/deftype+ AbsolutePosition [opts child ^:mut my-rect]
@@ -53,13 +51,16 @@
 
   (-draw
    [_ ctx ^IRect rect ^Canvas canvas]
-   (set! my-rect rect)
-   (core/draw-child
-    child ctx
-    (assoc rect
-           :x (:x opts)
-           :y (:y opts))
-    canvas))
+   (let [rect' (assoc rect
+                      :x (:x opts)
+                      :y (:y opts)
+                      :right (+ (:right rect) (:x opts))
+                      :bottom (+ (:bottom rect) (:y opts)))]
+     (set! my-rect rect')
+     (core/draw-child
+      child ctx
+      rect'
+      canvas)))
 
   (-event
    [_ ctx event]
@@ -106,13 +107,14 @@
            (for [c circles]
              (absolute
               (select-keys c [:x :y])
-              (circle {:radius (:r c)
-                       :on-click #(prn "hi")}))))))))]))))
+              (ui/clickable
+               {:on-click (fn [_] (prn "hi"))}
+               (circle {:radius (:r c)})))))))))]))))
 
 
 (defn start!
   []
-  (let [*state (atom {:circles [{:x 100 :y 100 :r 10}]})]
+  (let [*state (atom {:circles [{:x 120 :y 120 :r 10}]})]
     (reset! state/*app (circles
                         {:on-add-circle
                          (fn [x y]
