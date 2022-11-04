@@ -12,7 +12,7 @@
    [io.github.humbleui.skija Canvas]
    [io.github.humbleui.types IRect]))
 
-(core/deftype+ Circle [opts ^:mut my-rect]
+(core/deftype+ Circle [^:mut my-rect]
   protocols/IComponent
   (-measure
    [_ ctx cs]
@@ -38,8 +38,8 @@
    (cb this)))
 
 (defn circle
-  [{:keys [radius] :as opts}]
-  (->Circle opts nil))
+  []
+  (->Circle nil))
 
 
 (core/deftype+ AbsolutePosition [opts child ^:mut my-rect]
@@ -112,7 +112,7 @@
               (select-keys c [:x :y :bottom :right])
               (ui/clickable
                {:on-click (fn [_] (prn "hi"))}
-               (circle {:radius (:r c)})))))))))]))))
+               (circle)))))))))]))))
 
 
 (defn start!
