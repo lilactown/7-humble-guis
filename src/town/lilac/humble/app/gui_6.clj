@@ -52,125 +52,187 @@
 
 (defn app
   [{:keys [on-add-circle
-           on-adjust-diameter
+           on-adjust-size
            on-undo
            on-redo
            on-select
-           on-show-menu]} *state]
+           on-show-menu
+           on-show-modal
+           on-hide-modal]} *state]
   (ui2/with-theme
-   (ui/padding
-    10
-    (ui/column
-     (ui/center
-      (ui/row
-       (ui/dynamic
-        _ctx
-        [disabled? (empty? (:undo-history @*state))]
-        (ui2/disabled
-         disabled?
-         (ui2/button on-undo (ui/label "Undo"))))
-       (ui/gap 10 10)
-       (ui/dynamic
-        _ctx
-        [disabled? (empty? (:redo-history @*state))]
-        (ui2/disabled
-         disabled?
-         (ui2/button on-redo (ui/label "Redo"))))))
-     (ui/gap 10 10)
-     [:stretch 1
-      (ui/clickable
-       {:on-click (fn [e] (on-add-circle (- (:x e) 20)
-                                         (- (:y e) 20)
-                                         (+ (:x e) 20)
-                                         (+ (:y e) 20)))}
-       (ui/rounded-rect
-        {:radius 4}
-        (paint/stroke 0xFFCCCCCC 2)
+    (ui/stack
+
+     (ui/padding
+      10
+      (ui/column
+       (ui/center
         (ui/row
          (ui/dynamic
-          _ctx [circles (:circles @*state)
-                selected (:selected @*state)
-                menu? (:menu? @*state)]
-          (ui2/fragment
-           (for [[i rect] (map-indexed vector circles)]
-             (ui2/absolute-rect
-              (select-keys rect [:x :y :bottom :right])
-              (ui/clickable
-               {:on-click (fn [e]
-                            (case (:button e)
-                              :primary (on-select i)
-                              :secondary (on-show-menu)
-                              nil))}
-               (ui2/relative-rect
-                {:shackle :bottom-right}
-                (if (and (= selected i) menu?)
-                  (ui/clickable
-                   {:on-click (fn [_] (on-adjust-diameter))}
-                   (ui/rect
-                    (paint/fill 0xFFE9E9E9)
-                    (ui/padding 10 10 (ui/label "Adjust diameter"))))
-                  (ui/gap 0 0))
-                (circle
-                 (when (= selected i)
-                   (paint/fill 0xFFDDDDDD))))))))))))]))))
+          _ctx
+          [disabled? (empty? (:undo-history @*state))]
+          (ui2/disabled
+           disabled?
+           (ui2/button on-undo (ui/label "Undo"))))
+         (ui/gap 10 10)
+         (ui/dynamic
+          _ctx
+          [disabled? (empty? (:redo-history @*state))]
+          (ui2/disabled
+           disabled?
+           (ui2/button on-redo (ui/label "Redo"))))))
+       (ui/gap 10 10)
+       [:stretch 1
+        (ui/clickable
+         {:on-click (fn [e] (on-add-circle (:x e) (:y e)))}
+         (ui/rounded-rect
+          {:radius 4}
+          (paint/stroke 0xFFCCCCCC 2)
+          (ui/row
+           (ui/dynamic
+            _ctx [circles (:circles @*state)
+                  selected (:selected @*state)
+                  menu? (:menu? @*state)]
+            (ui2/fragment
+             (for [[i rect] (map-indexed vector circles)]
+               (ui2/absolute-rect
+                (select-keys rect [:x :y :bottom :right])
+                (ui/clickable
+                 {:on-click (fn [e]
+                              (case (:button e)
+                                :primary (on-select i)
+                                :secondary (on-show-menu)
+                                nil))}
+                 (ui2/relative-rect
+                  {:shackle :bottom-right}
+                  (if (and (= selected i) menu?)
+                    (ui/clickable
+                     {:on-click (fn [_] (on-show-modal))}
+                     (ui/rect
+                      (paint/fill 0xFFE9E9E9)
+                      (ui/padding 10 10 (ui/label "Adjust diameter"))))
+                    (ui/gap 0 0))
+                  (circle
+                   (when (= selected i)
+                     (paint/fill 0xFFDDDDDD))))))))))))]))
+     (ui/dynamic
+      _ctx
+      [show-modal? (:show-modal? @*state)]
+      (when show-modal?
+        (ui/stack
+         (ui/clickable
+          {:on-click (fn [_] (on-hide-modal))}
+          (ui/rect
+           (paint/fill 0x44000000)
+           (ui/label "")))
+         (ui/valign
+          0.8
+          (ui/halign
+           0.5
+           (ui/clip-rrect
+            5
+            (ui/rect
+             (paint/fill 0xFFFFFFFF)
+             (ui/padding
+              30 30
+              (ui/column
+               (ui/slider
+                (let [selected (:selected @*state)
+                      {:keys [x right]} (get-in @*state [:circles selected])
+                      *state (atom {:value (- right x)
+                                    :min 10
+                                    :max 500})]
+                  (add-watch
+                   *state
+                   ::size-change
+                   (fn [_ _ _ {:keys [value]}]
+                     (on-adjust-size value)))
+                  *state))
+               (ui/gap 0 20)
+               (ui/button on-hide-modal (ui/label "Done"))))))))))))))
 
 
 (defn start!
   []
-  (let [*state (atom {:circles [{:x 120 :y 120 :bottom 160 :right 160}]
+  (let [*state (atom {:circles [{:x 200 :y 200 :bottom 240 :right 240}]
                       :undo-history ()
                       :redo-history ()
                       :selected nil
-                      :menu? false})]
-    (reset! state/*app (app
-                        {:on-add-circle
-                         (fn [x y right bottom]
-                           (swap!
-                            *state
-                            (fn [state]
-                              (-> state
-                                  (update :circles conj {:x x
-                                                         :y y
-                                                         :right right
-                                                         :bottom bottom})
-                                  (update :undo-history conj
-                                          (:circles state))
-                                  (assoc :redo-history ()
-                                         :selected nil)))))
+                      :menu? false
+                      :show-modal? false})]
+    (reset!
+     state/*app
+     (app
+      {:on-add-circle
+       (fn [x y]
+         (swap!
+          *state
+          (fn [state]
+            (-> state
+                (update :circles conj {:x (- x 20)
+                                       :y (- y 20)
+                                       :right (+ x 20)
+                                       :bottom (+ y 20)})
+                (update :undo-history conj
+                        (:circles state))
+                (assoc :redo-history ()
+                       :selected nil)))))
 
-                         :on-adjust-diameter
-                         #(swap! *state assoc :menu? false)
+       :on-adjust-size
+       (fn [d']
+         (swap!
+          *state
+          (fn [state]
+            (let [selected (:selected state)
+                  {:keys [x y right bottom]} (get-in state [:circles selected])
+                  d (- right x)
+                  delta (/ (- d' d) 2)]
+              (-> state
+                  (update-in [:circles selected :x] - delta)
+                  (update-in [:circles selected :y] - delta)
+                  (update-in [:circles selected :bottom] + delta)
+                  (update-in [:circles selected :right] + delta))))))
 
-                         :on-undo
-                         #(swap!
-                           *state
-                           (fn [state]
-                             (if-let [circles (peek (:undo-history state))]
-                               (-> state
-                                   (assoc :circles circles
-                                          :selected nil)
-                                   (update :undo-history pop)
-                                   (update :redo-history conj (:circles state)))
-                               state)))
+       :on-hide-modal
+       #(swap! *state assoc :show-modal? false)
 
-                         :on-redo
-                         #(swap!
-                           *state
-                           (fn [state]
-                             (if-let [circles (peek (:redo-history state))]
-                               (-> state
-                                   (update :redo-history pop)
-                                   (update :undo-history conj (:circles state))
-                                   (assoc :circles circles
-                                          :selected nil))
-                               state)))
+       :on-undo
+       #(swap!
+         *state
+         (fn [state]
+           (if-let [circles (peek (:undo-history state))]
+             (-> state
+                 (assoc :circles circles
+                        :selected nil)
+                 (update :undo-history pop)
+                 (update :redo-history conj (:circles state)))
+             state)))
 
-                         :on-select (fn [i] (swap! *state assoc :selected i))
-                         :on-show-menu #(swap! *state assoc :menu? true)}
-                        *state)))
+       :on-redo
+       #(swap!
+         *state
+         (fn [state]
+           (if-let [circles (peek (:redo-history state))]
+             (-> state
+                 (update :redo-history pop)
+                 (update :undo-history conj (:circles state))
+                 (assoc :circles circles
+                        :selected nil))
+             state)))
+
+       :on-select (fn [i] (swap! *state assoc :selected i))
+       :on-show-menu #(swap! *state assoc :menu? true)
+       :on-show-modal
+       #(swap! *state
+               (fn [state]
+                 (-> state
+                     (assoc :menu? false
+                            :show-modal? true
+                            :redo-history ())
+                     (update :undo-history conj (:circles state)))))}
+      *state)))
   (state/redraw!)
   (app/doui
-   (window/set-content-size @state/*window 700 500)))
+   (window/set-content-size @state/*window 1000 800)))
 
 
 (start!)
