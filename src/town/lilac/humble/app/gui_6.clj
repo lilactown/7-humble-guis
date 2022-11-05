@@ -114,6 +114,8 @@
                   (circle
                    (when (= selected i)
                      (paint/fill 0xFFDDDDDD))))))))))))]))
+     ;; credit to @oakmac for their humble-modal-example
+     ;; https://github.com/oakmac/humble-modal-example
      (ui/dynamic
       _ctx
       [show-modal? (:show-modal? @*state)]
