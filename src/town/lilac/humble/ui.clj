@@ -8,8 +8,8 @@
    [town.lilac.humble.text-field :as tf])
   (:import
    [java.lang AutoCloseable]
-   [io.github.humbleui.skija Canvas]
-   [io.github.humbleui.types IPoint IRect]))
+   [io.github.humbleui.skija Canvas Paint]
+   [io.github.humbleui.types IPoint IRect RRect]))
 
 
 (defn with-theme
@@ -167,3 +167,114 @@
 (defn fragment
   [children]
   (apply ui/stack children))
+
+
+(core/deftype+ HScroll [child ^:mut offset ^:mut ^IRect self-rect ^:mut child-size]
+  protocols/IComponent
+  (-measure [_ ctx cs]
+    (let [child-cs (assoc cs :width Integer/MAX_VALUE)]
+      (set! child-size (protocols/-measure child ctx child-cs))
+      (IPoint. (:width cs) (:height child-size))))
+
+  (-draw [_ ctx ^IRect rect ^Canvas canvas]
+    (when (nil? child-size)
+      (set! child-size (protocols/-measure child ctx (IPoint. Integer/MAX_VALUE (:height rect)))))
+    (set! self-rect rect)
+    (set! offset (core/clamp offset (- (:width rect) (:width child-size)) 0))
+    (let [layer      (.save canvas)
+          child-rect (-> rect
+                       (update :x + offset)
+                       (assoc :width Integer/MAX_VALUE))]
+      (try
+        (.clipRect canvas (.toRect rect))
+        (core/draw child ctx child-rect canvas)
+        (finally
+          (.restoreToCount canvas layer)))))
+
+  (-event [_ ctx event]
+    (cond
+      (= :mouse-scroll (:event event))
+      (when (.contains self-rect (IPoint. (:x event) (:y event)))
+        (or
+          (core/event-child child ctx event)
+          (let [offset' (-> offset
+                          (+ (:delta-x event))
+                          (core/clamp (- (:width self-rect) (:width child-size)) 0))]
+            (when (not= offset offset')
+              (set! offset offset')
+              true))))
+
+      (= :mouse-button (:event event))
+      (when (.contains self-rect (IPoint. (:x event) (:y event)))
+        (core/event-child child ctx event))
+
+      :else
+      (core/event-child child ctx event)))
+
+  (-iterate [this ctx cb]
+    (or
+      (cb this)
+      (protocols/-iterate child ctx cb)))
+
+  AutoCloseable
+  (close [_]
+    (core/child-close child)))
+
+(defn hscroll [child]
+  (->HScroll child 0 nil nil))
+
+
+(core/deftype+ HScrollbar [child ^Paint fill-track ^Paint fill-thumb ^:mut child-rect]
+  protocols/IComponent
+  (-measure [_ ctx cs]
+    (core/measure child ctx cs))
+
+  (-draw [_ ctx rect ^Canvas canvas]
+    (set! child-rect rect)
+    (core/draw-child child ctx child-rect canvas)
+    (when (> (:width (:child-size child)) (:width child-rect))
+      (let [{:keys [scale]} ctx
+            content-x (- (:offset child))
+            content-w (:width (:child-size child))
+            scroll-x  (:x child-rect)
+            scroll-w  (:width child-rect)
+
+            padding (* 4 scale)
+            track-h (* 4 scale)
+            ;; track-x (+ (:x rect) (:width child-rect) (- track-w) (- padding))
+            ;; track-y (+ scroll-y padding)
+            ;; track-h (- scroll-h (* 2 padding))
+            track-x (+ scroll-x padding)
+            track-y (+ (:y rect) (:height child-rect) (- track-h) (- padding))
+            track-w (- scroll-w (* 2 padding))
+            track   (RRect/makeXYWH track-x track-y track-w track-h (* 2 scale))
+
+            thumb-w       (* 4 scale)
+            min-thumb-h   (* 16 scale)
+            thumb-x-ratio (/ content-x content-w)
+            thumb-x       (-> (* track-h thumb-x-ratio) (core/clamp 0 (- track-h min-thumb-h)) (+ track-y))
+            thumb-r-ratio (/ (+ content-x scroll-w) content-w)
+            thumb-r       (-> (* track-w thumb-x-ratio) (core/clamp min-thumb-h track-h) (+ track-y))
+            thumb         (RRect/makeLTRB thumb-x track-y thumb-r (+ track-x thumb-w) (* 2 scale))]
+        (.drawRRect canvas track fill-track)
+        #_(.drawRRect canvas thumb fill-thumb))))
+
+  (-event [_ ctx event]
+    (core/event-child child ctx event))
+
+  (-iterate [this ctx cb]
+    (or
+      (cb this)
+      (protocols/-iterate child ctx cb)))
+
+  AutoCloseable
+  (close [_]
+    ;; TODO causes crash
+    ; (.close fill-track)
+    ; (.close fill-thumb)
+    (core/child-close child)))
+
+(defn hscrollbar [child]
+  (when-not (instance? HScroll child)
+    (throw (ex-info (str "Expected VScroll, got: " (type child)) {:child child})))
+  (->HScrollbar child (paint/fill 0xFF000000) (paint/fill 0x60000000) nil))
