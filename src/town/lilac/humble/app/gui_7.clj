@@ -15,30 +15,29 @@
    (ui/focus-controller
     (ui/vscrollbar
      (ui/vscroll
-      (ui2/hscrollbar
-       (ui2/hscroll
-        (ui/column
-         (ui/row
-          (ui/gap 26 20)
-          (for [j (map (comp str char) (range 65 91))]
-            (ui/width
-             80
-             (ui/center
-              (ui/label j)))))
-         (for [i (range 100)]
-           (ui/row
-            (ui/width
-             25
-             (ui/valign
-              0.5
-              (ui/halign
-               0.3
-               (ui/label i))))
-            (for [j (map char (range 26))]
-              (ui/column
-               (ui/width
-                80
-                (ui/text-field (atom {})))))))))))))))
+      (ui2/hscroll
+       (ui/column
+        (ui/row
+         (ui/gap 26 20)
+         (for [j (map (comp str char) (range 65 91))]
+           (ui/width
+            80
+            (ui/center
+             (ui/label j)))))
+        (for [i (range 100)]
+          (ui/row
+           (ui/width
+            25
+            (ui/valign
+             0.5
+             (ui/halign
+              0.3
+              (ui/label i))))
+           (for [j (map char (range 26))]
+             (ui/column
+              (ui/width
+               80
+               (ui/text-field (atom {}))))))))))))))
 
 
 (defn start!
