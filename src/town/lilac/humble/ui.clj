@@ -238,6 +238,7 @@
             content-w (:width (:child-size child))
             scroll-x  (:x child-rect)
             scroll-w  (:width child-rect)
+            ;;_ (prn scroll-x scroll-w)
 
             padding (* 4 scale)
             track-h (* 4 scale)
@@ -245,8 +246,10 @@
             ;; track-y (+ scroll-y padding)
             ;; track-h (- scroll-h (* 2 padding))
             track-x (+ scroll-x padding)
-            track-y (+ (:y rect) (:height child-rect) (- track-h) (- padding))
+            track-y (+ (:y rect) (:height rect) (- track-h) (- padding))
             track-w (- scroll-w (* 2 padding))
+            ;; _ (prn (:y rect) (:height child-rect))
+            _ (prn :xyw track-x track-y track-w)
             track   (RRect/makeXYWH track-x track-y track-w track-h (* 2 scale))
 
             thumb-w       (* 4 scale)
@@ -254,10 +257,10 @@
             thumb-x-ratio (/ content-x content-w)
             thumb-x       (-> (* track-h thumb-x-ratio) (core/clamp 0 (- track-h min-thumb-h)) (+ track-y))
             thumb-r-ratio (/ (+ content-x scroll-w) content-w)
-            thumb-r       (-> (* track-w thumb-x-ratio) (core/clamp min-thumb-h track-h) (+ track-y))
+            thumb-r       (-> (* track-w thumb-r-ratio) (core/clamp min-thumb-h track-h) (+ track-y))
             thumb         (RRect/makeLTRB thumb-x track-y thumb-r (+ track-x thumb-w) (* 2 scale))]
         (.drawRRect canvas track fill-track)
-        #_(.drawRRect canvas thumb fill-thumb))))
+        (.drawRRect canvas thumb fill-thumb))))
 
   (-event [_ ctx event]
     (core/event-child child ctx event))
@@ -276,5 +279,5 @@
 
 (defn hscrollbar [child]
   (when-not (instance? HScroll child)
-    (throw (ex-info (str "Expected VScroll, got: " (type child)) {:child child})))
+    (throw (ex-info (str "Expected HScroll, got: " (type child)) {:child child})))
   (->HScrollbar child (paint/fill 0xFF000000) (paint/fill 0x60000000) nil))
