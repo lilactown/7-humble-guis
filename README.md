@@ -1,24 +1,27 @@
-# humble-starter
+# 7 Humble GUIs
 
-A commented, minimal example project to get you started with developing desktop
-apps using [HumbleUI](https://github.com/HumbleUI/HumbleUI) and Clojure.
+An implementation of [7 GUIs](https://eugenkiss.github.io/7guis/tasks/) in
+Clojure + [HumbleUI](https://github.com/HumbleUI/HumbleUI).
 
-## Devolepment
+Built using [lilactown/humble-starter](https://github.com/lilactown/humble-starter).
 
-To simply run the app, execute `./scripts/run.sh`.
+## Status
 
-To start a REPL (including a minimal nREPL server), you can run `./scripts/nrepl.sh`
+- [x] GUI 1: Counter
+- [x] GUI 2: Temperature converter
+- [x] GUI 3: Flight booker
+- [x] GUI 4: Timer
+- [x] GUI 5: CRUD
+- [x] GUI 6: Circle drawer
+- [ ] GUI 7: Cells
 
-### Reloading
+## Running & Devolepment
 
-To reload the app and see your changes reflected, you can:
+To start a REPL (including a minimal nREPL server), you can run `./scripts/nrepl.sh`.
+For Editor tooling, see below section.
 
-1. Evaluate individual forms via the REPL, reset the `state/*app` atom, and then
-   call `state/redraw!`
-2. Make changes to the files, save them, then call `reload` from the user ns,
-   which will use [clojure.tools.namespace](https://github.com/clojure/tools.namespace)
-   to detect which ns' should be refreshed, evaluate them, and then call
-   `state/redraw!`.
+To run each GUI, evaluate the namespace (e.g. `town.lilac.humble.app.gui-1`)
+through the REPL. To see changes, evaluate it again.
 
 ### CIDER
 
