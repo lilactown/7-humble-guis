@@ -5,15 +5,49 @@ Clojure + [HumbleUI](https://github.com/HumbleUI/HumbleUI).
 
 Built using [lilactown/humble-starter](https://github.com/lilactown/humble-starter).
 
-## Status
+## GUIs
 
-- [x] GUI 1: Counter
-- [x] GUI 2: Temperature converter
-- [x] GUI 3: Flight booker
-- [x] GUI 4: Timer
-- [x] GUI 5: CRUD
-- [x] GUI 6: Circle drawer
-- [ ] GUI 7: Cells
+### GUI 1: Counter
+
+**STATUS**: Complete
+
+![Screenshot of GUI 1: Counter](gui1_counter.png)
+
+### GUI 2: Temperature converter
+
+**STATUS**: Complete
+
+![Screenshot of GUI 2: Temperature converter](gui2_temperature_converter.png)
+
+### GUI 3: Flight booker
+
+**STATUS**: Complete
+
+![Screenshot of GUI 3: Flight booker](gui3_flight_booker.png)
+
+### GUI 4: Timer
+
+**STATUS**: Complete
+
+![Screenshot of GUI 4: Timer](gui4_timer.png)
+
+### GUI 5: CRUD
+
+**STATUS**: Complete
+
+![Screenshot of GUI 5: CRUD](gui5_crud.png)
+
+### GUI 6: Circle drawer
+
+**STATUS**: Complete
+
+![Screenshot of GUI 6: Circle drawer](gui6_circle_drawer.png)
+
+### GUI 7: Cells
+
+**STATUS**: WIP
+
+![Screenshot of GUI 7: Cells](gui7_cells.png)
 
 ## Running
 
