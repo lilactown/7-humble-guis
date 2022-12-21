@@ -28,7 +28,7 @@
   [& args]
   (ns/set-refresh-dirs "src")
   ;; start app
-  (main/-main)
+  (main/-main "1")
 
   ;; (reset! debug/*enabled? true)
 

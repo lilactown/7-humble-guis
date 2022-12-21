@@ -54,7 +54,6 @@
         run-timer! (fn run-timer! []
                      (future
                        (Thread/sleep 100)
-                       (prn :tick)
                        (when (< @*timer (:value @*config))
                          (swap! *timer + 100))
                        (when-not @*inner-halt!

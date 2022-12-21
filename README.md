@@ -15,7 +15,19 @@ Built using [lilactown/humble-starter](https://github.com/lilactown/humble-start
 - [x] GUI 6: Circle drawer
 - [ ] GUI 7: Cells
 
-## Running & Devolepment
+## Running
+
+To run each GUI, pass the `./script/run.sh` script the number you want to run.
+
+```clojure
+# run the "Counter" GUI
+./script/run.sh 1
+
+# run the "Timer" GUI
+./script/run.sh 4
+```
+
+## Devolepment
 
 To start a REPL (including a minimal nREPL server), you can run `./scripts/nrepl.sh`.
 For Editor tooling, see below section.
@@ -46,7 +58,7 @@ by running the jack-in command but customizing it. In Emacs, this is
 
 For our purposes, the `user` ns has a `-main` function which handles all of the
 app and nREPL server initialization. The only thing we need to replace the call to
-CIDER's main wiht our own and pass in the middlewares to it.
+CIDER's main with our own and pass in the middlewares to it.
 
 Below, we show the command after we delete the use of the `:cider/nrepl` alias
 and replace it with the `:dev:cider` alias configured in our deps.edn, which

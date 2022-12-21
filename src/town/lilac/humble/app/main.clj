@@ -18,11 +18,20 @@
 
 (defn -main
   "Run once on app start, starting the humble app."
-  [& args]
+  [gui & args]
   (ui/start-app!
    (reset! state/*window
            (ui/window
-            {:title    "Editor"
+            {:title    "7GUIs"
              :bg-color 0xFFFFFFFF}
-            state/*app)))
+            state/*app))
+   (case gui
+     "1" (require 'town.lilac.humble.app.gui-1)
+     "2" (require 'town.lilac.humble.app.gui-2)
+     "3" (require 'town.lilac.humble.app.gui-3)
+     "4" (require 'town.lilac.humble.app.gui-4)
+     "5" (require 'town.lilac.humble.app.gui-5)
+     "6" (require 'town.lilac.humble.app.gui-6)
+     "7" (require 'town.lilac.humble.app.gui-7)
+    nil))
   (state/redraw!))
