@@ -41,7 +41,22 @@
   ;; => 41N
   (f->c 41)
   ;; => 5N
-  )
+  ,)
+
+(defn safe-parse-float
+  " behavior when text field is empty is undefined -- let's return 0.0 "
+  [s]
+  (if (or (nil? s)
+          (= s ""))
+    0.0
+    (Float/parseFloat s)))
+
+(comment
+  (safe-parse-float nil)   ;; => 0.0
+  (safe-parse-float "")    ;; => 0.0
+  (safe-parse-float "4.0") ;; => 4.0
+  0)
+
 
 (defn start!
   []
@@ -53,13 +68,13 @@
                      (swap!
                       *f-input
                       assoc :text
-                      (str (c->f (Float/parseFloat text)))))
+                      (str (c->f (safe-parse-float text)))))
         on-fahrenheit (fn on-fahrenheit-change
                         [{:keys [text]}]
                         (swap!
                          *c-input
                          assoc :text
-                         (str (f->c (Float/parseFloat text)))))]
+                         (str (f->c (safe-parse-float text)))))]
     (reset! state/*app (temp-converter
                         *c-input *f-input
                         on-celsius
