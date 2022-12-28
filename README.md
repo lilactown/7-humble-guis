@@ -61,13 +61,20 @@ To run each GUI, pass the `./script/run.sh` script the number you want to run.
 ./script/run.sh 4
 ```
 
-## Devolepment
+## Development
 
 To start a REPL (including a minimal nREPL server), you can run `./scripts/nrepl.sh`.
 For Editor tooling, see below section.
 
 To run each GUI, evaluate the namespace (e.g. `town.lilac.humble.app.gui-1`)
 through the REPL. To see changes, evaluate it again.
+
+### IntelliJ/Cursive
+
+Create a REPL for HumbleUI apps as you would for any other application: 
+
+- Create a [Local REPL configuration](https://cursive-ide.com/userguide/repl.html#local-repls), and accept all the defaults
+- Run that newly created REPL
 
 ### CIDER
 
