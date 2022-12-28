@@ -43,18 +43,21 @@
   ;; => 5N
   ,)
 
-(defn safe-parse-float
-  " behavior when text field is empty is undefined -- let's return 0.0 "
+(defn- wrapped-parse-float
+  " behavior when text field is empty, undefined, not a number, etc. -- let's return 0.0 "
   [s]
-  (if (or (nil? s)
-          (= s ""))
-    0.0
-    (Float/parseFloat s)))
+  (try
+    (Float/parseFloat s)
+    (catch Exception e
+      (println (format "wrapped-parse-float: %s: exception: %s"
+                 s (.getMessage e)))
+      0.0)))
 
 (comment
-  (safe-parse-float nil)   ;; => 0.0
-  (safe-parse-float "")    ;; => 0.0
-  (safe-parse-float "4.0") ;; => 4.0
+  (wrapped-parse-float nil)   ;; => 0.0
+  (wrapped-parse-float "")    ;; => 0.0
+  (wrapped-parse-float "4.0") ;; => 4.0
+  (wrapped-parse-float "abc") ;; => 4.0
   0)
 
 
@@ -68,13 +71,13 @@
                      (swap!
                       *f-input
                       assoc :text
-                      (str (c->f (safe-parse-float text)))))
+                      (str (c->f (wrapped-parse-float text)))))
         on-fahrenheit (fn on-fahrenheit-change
                         [{:keys [text]}]
                         (swap!
                          *c-input
                          assoc :text
-                         (str (f->c (safe-parse-float text)))))]
+                         (str (f->c (wrapped-parse-float text)))))]
     (reset! state/*app (temp-converter
                         *c-input *f-input
                         on-celsius
