@@ -57,7 +57,7 @@
   (wrapped-parse-float nil)   ;; => 0.0
   (wrapped-parse-float "")    ;; => 0.0
   (wrapped-parse-float "4.0") ;; => 4.0
-  (wrapped-parse-float "abc") ;; => 4.0
+  (wrapped-parse-float "abc") ;; => 0.0
   0)
 
 
